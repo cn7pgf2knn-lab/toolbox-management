@@ -1,0 +1,285 @@
+/* Mobile-First PWA Styles for Toolbox Management */
+/* Add this to your existing styles or import it */
+
+/* ========================================
+   MOBILE VIEWPORT FIX
+   ======================================== */
+:root {
+    --vh: 1vh;
+}
+
+/* ========================================
+   PWA SPECIFIC ELEMENTS
+   ======================================== */
+.offline-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #f59e0b;
+    color: white;
+    padding: 12px;
+    text-align: center;
+    font-size: 14px;
+    z-index: 10000;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+#pwa-install-btn {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #fbbf24;
+    color: #1f2937;
+    border: none;
+    padding: 16px 24px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    z-index: 1000;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(251, 191, 36, 0.6);
+    }
+}
+
+/* ========================================
+   MOBILE RESPONSIVE IMPROVEMENTS
+   ======================================== */
+
+/* Touch-friendly tap targets (minimum 44x44px) */
+@media (max-width: 768px) {
+    .btn, button, a, input[type="checkbox"], input[type="radio"] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Larger form inputs on mobile */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    textarea,
+    select {
+        font-size: 16px !important; /* Prevents zoom on iOS */
+        padding: 12px !important;
+    }
+
+    /* Stack buttons vertically on mobile */
+    .list-item-actions {
+        flex-direction: column !important;
+        gap: 8px !important;
+        width: 100%;
+    }
+
+    .list-item-actions .btn {
+        width: 100%;
+    }
+
+    /* Responsive navigation tabs */
+    .nav-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .nav-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nav-tab {
+        white-space: nowrap;
+        font-size: 13px !important;
+        padding: 10px 12px !important;
+    }
+
+    /* Responsive tables */
+    table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+    }
+
+    /* Smaller stats grid on mobile */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+    }
+
+    .stat-card {
+        padding: 16px !important;
+    }
+
+    .stat-card h3 {
+        font-size: 24px !important;
+    }
+
+    /* Form containers */
+    .form-container {
+        padding: 16px !important;
+    }
+
+    /* Modal adjustments */
+    .app-container {
+        padding: 10px !important;
+    }
+
+    /* Login container on mobile */
+    .login-container {
+        margin: 20px auto !important;
+        padding: 24px !important;
+    }
+
+    /* Reduce padding everywhere on mobile */
+    body {
+        padding: 10px !important;
+    }
+}
+
+/* ========================================
+   LANDSCAPE MOBILE OPTIMIZATIONS
+   ======================================== */
+@media (max-width: 896px) and (orientation: landscape) {
+    body {
+        padding: 5px !important;
+    }
+
+    .login-container {
+        margin: 10px auto !important;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+}
+
+/* ========================================
+   SMALL MOBILE (< 375px)
+   ======================================== */
+@media (max-width: 374px) {
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .nav-tab {
+        font-size: 11px !important;
+        padding: 8px 10px !important;
+    }
+
+    h1 {
+        font-size: 24px !important;
+    }
+
+    h2 {
+        font-size: 20px !important;
+    }
+}
+
+/* ========================================
+   TOUCH OPTIMIZATIONS
+   ======================================== */
+
+/* Remove tap highlight on iOS */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Better button feedback on touch */
+.btn:active, button:active {
+    transform: scale(0.98);
+    transition: transform 0.1s;
+}
+
+/* ========================================
+   SAFE AREA INSETS (iPhone X+)
+   ======================================== */
+@supports (padding: env(safe-area-inset-left)) {
+    body {
+        padding-left: max(10px, env(safe-area-inset-left));
+        padding-right: max(10px, env(safe-area-inset-right));
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
+    }
+
+    .offline-banner {
+        padding-top: max(12px, env(safe-area-inset-top));
+    }
+
+    #pwa-install-btn {
+        bottom: max(20px, env(safe-area-inset-bottom));
+        right: max(20px, env(safe-area-inset-right));
+    }
+}
+
+/* ========================================
+   DARK MODE SUPPORT
+   ======================================== */
+@media (prefers-color-scheme: dark) {
+    /* Add dark mode styles if needed */
+    /* Currently using yellow theme, so might not be necessary */
+}
+
+/* ========================================
+   LOADING STATES
+   ======================================== */
+.loading-spinner {
+    border: 3px solid #f3f4f6;
+    border-top: 3px solid #fbbf24;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ========================================
+   SWIPE GESTURES HINT
+   ======================================== */
+.swipeable {
+    touch-action: pan-y;
+    user-select: none;
+}
+
+/* ========================================
+   MOBILE SPECIFIC UTILITIES
+   ======================================== */
+.mobile-only {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .mobile-only {
+        display: block;
+    }
+
+    .desktop-only {
+        display: none !important;
+    }
+}
