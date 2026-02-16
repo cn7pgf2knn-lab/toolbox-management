@@ -1,0 +1,3570 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Toolbox Management System - Firebase Sync</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Employee toolbox training and compliance management system with real-time cloud sync">
+    <meta name="theme-color" content="#fbbf24">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Toolbox">
+
+    <!-- Manifest Link -->
+    <link rel="manifest" href="manifest-firebase.json">
+
+    <!-- App Icon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E📚%3C/text%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect fill='%23fbbf24' width='192' height='192' rx='24'/%3E%3Ctext x='96' y='135' font-size='110' text-anchor='middle' font-family='Arial, sans-serif'%3E📚%3C/text%3E%3C/svg%3E">
+
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <!-- SheetJS library voor Excel lezen -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <!-- Database Layer -->
+    <script src="./database-layer.js"></script>
+    <script src="./firebase-implementation.js"></script>
+    <script src="./firebase-config.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #FFC700 0%, #FFB000 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .app-container { max-width: 1200px; margin: 0 auto; }
+        .login-container {
+            max-width: 500px;
+            margin: 100px auto;
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .company-logo {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #FFC700;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-weight: 900;
+            font-size: 24px;
+            color: #000;
+            text-align: center;
+            line-height: 1.2;
+            letter-spacing: 2px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        .company-logo-line {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 5px;
+        }
+        .company-logo-stripe {
+            width: 25px;
+            height: 8px;
+            background: #000;
+            transform: skewX(-20deg);
+        }
+        .firebase-badge {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(135deg, #FF6B00 0%, #FFA000 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .firebase-badge::before {
+            content: '🔥';
+            font-size: 14px;
+        }
+        @media (max-width: 768px) {
+            .firebase-badge {
+                top: 10px;
+                left: 10px;
+                font-size: 10px;
+                padding: 6px 12px;
+            }
+        }
+        .login-header { text-align: center; margin-bottom: 32px; }
+        .login-header h1 {
+            color: #1f2937;
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .header-left h1 {
+            color: #1f2937;
+            font-size: 28px;
+        }
+        .user-info { text-align: right; }
+        .nav-tabs {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .nav-tab {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            background: #f3f4f6;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .nav-tab.active {
+            background: linear-gradient(135deg, #FFC700 0%, #FFB000 100%);
+            color: white;
+        }
+        .content-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        .section-title { font-size: 22px; margin-bottom: 20px; color: #1f2937; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .form-group input:focus,
+        .form-group select:focus { outline: none; border-color: #FFC700; }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            margin-right: 8px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #FFC700 0%, #FFB000 100%);
+            color: white;
+        }
+        .btn-primary:hover { transform: translateY(-2px); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-secondary { background: #f3f4f6; color: #374151; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-logout { background: #6b7280; color: white; padding: 8px 16px; }
+        .list-item {
+            background: #f9fafb;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .list-item-actions { display: flex; gap: 8px; }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .badge-blue { background: #dbeafe; color: #1e40af; }
+        .badge-green { background: #d1fae5; color: #065f46; }
+        .badge-yellow { background: #fef3c7; color: #92400e; }
+        .badge-purple { background: #fef3c7; color: #92400e; }
+        .badge-orange { background: #fed7aa; color: #92400e; }
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        .alert-error { background: #fee2e2; color: #991b1b; }
+        .alert-success { background: #d1fae5; color: #065f46; }
+        .alert-info { background: #dbeafe; color: #1e40af; }
+        .alert-warning { background: #fef3c7; color: #92400e; }
+        .form-container {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #FFC700 0%, #FFB000 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+        }
+        .stat-card h3 { font-size: 32px; margin-bottom: 8px; }
+        .setup-box {
+            background: #fef3c7;
+            border: 2px solid #FFB000;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+        .setup-box h3 { color: #92400e; margin-bottom: 12px; }
+        .setup-box ol { margin-left: 20px; color: #78350f; }
+        .setup-box li { margin-bottom: 8px; }
+        .setup-box code {
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .email-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .email-status.configured {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .email-status.not-configured {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #FFC700 0%, #FFB000 100%);
+            transition: width 0.3s;
+        }
+        .welcome-box {
+            background: linear-gradient(135deg, #FFC700 0%, #FFB000 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .welcome-box h2 { font-size: 28px; margin-bottom: 12px; }
+        @media (max-width: 768px) {
+            .list-item { flex-direction: column; align-items: flex-start; }
+            .list-item-actions { margin-top: 12px; width: 100%; }
+
+            /* MOBIELE LOGIN LAYOUT */
+            .login-container {
+                margin: 20px auto !important;
+                padding: 30px 24px !important;
+                max-width: 100% !important;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .company-logo {
+                position: relative !important;
+                top: 0 !important;
+                right: 0 !important;
+                margin: 0 0 40px 0 !important;
+                padding: 25px 40px !important;
+                font-size: 28px !important;
+                width: 100%;
+                max-width: 320px;
+            }
+
+            .company-logo-line .company-logo-stripe {
+                width: 35px !important;
+                height: 10px !important;
+            }
+
+            .login-header {
+                width: 100%;
+                margin-bottom: 24px !important;
+            }
+
+            .login-header h1 {
+                font-size: 24px !important;
+            }
+
+            .form-group {
+                width: 100%;
+            }
+
+            .form-group input,
+            .form-group select {
+                font-size: 16px !important;
+                padding: 14px !important;
+            }
+
+            .btn {
+                width: 100%;
+                padding: 14px !important;
+                font-size: 16px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="firebase-badge">FIREBASE SYNC</div>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        emailjs.init("YOUR_PUBLIC_KEY");
+
+        const Storage = {
+            save(key, data) {
+                localStorage.setItem(key, JSON.stringify({
+                    version: '1.0',
+                    timestamp: new Date().toISOString(),
+                    data
+                }));
+            },
+            load(key) {
+                const item = localStorage.getItem(key);
+                return item ? JSON.parse(item).data || JSON.parse(item) : null;
+            },
+            exportAll() {
+                return JSON.stringify({
+                    users: this.load('users_complete'),
+                    employees: this.load('employees_complete'),
+                    toolboxes: this.load('toolboxes_complete'),
+                    completions: this.load('completions_complete'),
+                    invitations: this.load('invitations_complete'),
+                    emailConfig: this.load('emailjs_config')
+                }, null, 2);
+            },
+            importAll(json) {
+                try {
+                    const data = JSON.parse(json);
+                    if (data.users) this.save('users_complete', data.users);
+                    if (data.employees) this.save('employees_complete', data.employees);
+                    if (data.toolboxes) this.save('toolboxes_complete', data.toolboxes);
+                    if (data.completions) this.save('completions_complete', data.completions);
+                    if (data.invitations) this.save('invitations_complete', data.invitations);
+                    if (data.emailConfig) this.save('emailjs_config', data.emailConfig);
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            }
+        };
+
+        // INDEXEDDB voor grote PDFs en documenten
+        const PDFStorage = {
+            dbName: 'ToolboxPDFs',
+            version: 1,
+            db: null,
+
+            async init() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.dbName, this.version);
+
+                    request.onerror = () => reject(request.error);
+                    request.onsuccess = () => {
+                        this.db = request.result;
+                        resolve(this.db);
+                    };
+
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+
+                        // Store voor toolbox PDFs
+                        if (!db.objectStoreNames.contains('toolboxPDFs')) {
+                            db.createObjectStore('toolboxPDFs', { keyPath: 'id' });
+                        }
+
+                        // Store voor persoonlijke documenten
+                        if (!db.objectStoreNames.contains('personalDocs')) {
+                            db.createObjectStore('personalDocs', { keyPath: 'id' });
+                        }
+                    };
+                });
+            },
+
+            async savePDF(id, pdfData, name) {
+                if (!this.db) await this.init();
+
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction(['toolboxPDFs'], 'readwrite');
+                    const store = transaction.objectStore('toolboxPDFs');
+                    const request = store.put({ id, data: pdfData, name, timestamp: new Date().toISOString() });
+
+                    request.onsuccess = () => resolve(true);
+                    request.onerror = () => reject(request.error);
+                });
+            },
+
+            async getPDF(id) {
+                if (!this.db) await this.init();
+
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction(['toolboxPDFs'], 'readonly');
+                    const store = transaction.objectStore('toolboxPDFs');
+                    const request = store.get(id);
+
+                    request.onsuccess = () => resolve(request.result?.data || null);
+                    request.onerror = () => reject(request.error);
+                });
+            },
+
+            async deletePDF(id) {
+                if (!this.db) await this.init();
+
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction(['toolboxPDFs'], 'readwrite');
+                    const store = transaction.objectStore('toolboxPDFs');
+                    const request = store.delete(id);
+
+                    request.onsuccess = () => resolve(true);
+                    request.onerror = () => reject(request.error);
+                });
+            },
+
+            async savePersonalDoc(id, fileData, fileName, type) {
+                if (!this.db) await this.init();
+
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction(['personalDocs'], 'readwrite');
+                    const store = transaction.objectStore('personalDocs');
+                    const request = store.put({ id, data: fileData, fileName, type, timestamp: new Date().toISOString() });
+
+                    request.onsuccess = () => resolve(true);
+                    request.onerror = () => reject(request.error);
+                });
+            },
+
+            async getPersonalDoc(id) {
+                if (!this.db) await this.init();
+
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction(['personalDocs'], 'readonly');
+                    const store = transaction.objectStore('personalDocs');
+                    const request = store.get(id);
+
+                    request.onsuccess = () => resolve(request.result?.data || null);
+                    request.onerror = () => reject(request.error);
+                });
+            },
+
+            async deletePersonalDoc(id) {
+                if (!this.db) await this.init();
+
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction(['personalDocs'], 'readwrite');
+                    const store = transaction.objectStore('personalDocs');
+                    const request = store.delete(id);
+
+                    request.onsuccess = () => resolve(true);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+        };
+
+        // Initialiseer IndexedDB bij laden
+        PDFStorage.init().catch(err => console.error('IndexedDB init error:', err));
+
+        const hashPassword = async (password) => {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hash = await crypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(hash))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+        };
+
+        const formatDate = (date) => {
+            return new Date(date).toLocaleDateString('nl-NL', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        };
+
+        const generateInviteToken = () => {
+            return Array.from(crypto.getRandomValues(new Uint8Array(16)))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+        };
+
+        const getURLParams = () => {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                inviteToken: params.get('invite')
+            };
+        };
+
+        const AuthContext = React.createContext();
+
+        function App() {
+            const [currentUser, setCurrentUser] = useState(null);
+            const [users, setUsers] = useState([]);
+            const [employees, setEmployees] = useState([]);
+            const [toolboxes, setToolboxes] = useState([]);
+            const [completions, setCompletions] = useState([]);
+            const [invitations, setInvitations] = useState([]);
+            const [emailConfig, setEmailConfig] = useState(null);
+            const [showRegistration, setShowRegistration] = useState(false);
+            const [activeInvitation, setActiveInvitation] = useState(null);
+
+            useEffect(() => {
+                const initializeData = async () => {
+                    let savedUsers = Storage.load('users_complete');
+                    if (!savedUsers) {
+                        const adminPassword = await hashPassword('admin123');
+                        savedUsers = [{
+                            id: 1,
+                            username: 'admin',
+                            password: adminPassword,
+                            role: 'admin',
+                            name: 'Beheerder',
+                            email: 'admin@bedrijf.nl',
+                            createdDate: new Date().toISOString()
+                        }];
+                        Storage.save('users_complete', savedUsers);
+                    }
+                    setUsers(savedUsers);
+                    setEmployees(Storage.load('employees_complete') || []);
+                    setToolboxes(Storage.load('toolboxes_complete') || []);
+                    setCompletions(Storage.load('completions_complete') || []);
+
+                    const savedInvitations = Storage.load('invitations_complete') || [];
+                    setInvitations(savedInvitations);
+
+                    const savedConfig = Storage.load('emailjs_config');
+                    if (savedConfig) {
+                        setEmailConfig(savedConfig);
+                        emailjs.init(savedConfig.publicKey);
+                    }
+
+                    // Check for invite token in URL
+                    const { inviteToken } = getURLParams();
+                    if (inviteToken) {
+                        const invitation = savedInvitations.find(inv => inv.token === inviteToken && !inv.used);
+                        if (invitation) {
+                            setActiveInvitation(invitation);
+                            setShowRegistration(true);
+                        }
+                    }
+                };
+                initializeData();
+            }, []);
+
+            useEffect(() => { if (users.length > 0) Storage.save('users_complete', users); }, [users]);
+            useEffect(() => { Storage.save('employees_complete', employees); }, [employees]);
+            useEffect(() => { Storage.save('toolboxes_complete', toolboxes); }, [toolboxes]);
+            useEffect(() => { Storage.save('completions_complete', completions); }, [completions]);
+
+            // Automatische backup bij elke wijziging
+            useEffect(() => {
+                if (users.length > 0 || employees.length > 0 || toolboxes.length > 0 || completions.length > 0) {
+                    const autoBackup = {
+                        timestamp: new Date().toISOString(),
+                        users,
+                        employees,
+                        toolboxes,
+                        completions,
+                        invitations,
+                        emailConfig
+                    };
+                    localStorage.setItem('auto_backup', JSON.stringify(autoBackup));
+                }
+            }, [users, employees, toolboxes, completions, invitations, emailConfig]);
+            useEffect(() => { Storage.save('invitations_complete', invitations); }, [invitations]);
+
+            const login = async (username, password) => {
+                const hashedPassword = await hashPassword(password);
+                const user = users.find(u => u.username === username && u.password === hashedPassword);
+                if (user) {
+                    setCurrentUser(user);
+                    return { success: true };
+                }
+                return { success: false, error: 'Ongeldige inloggegevens' };
+            };
+
+            const logout = () => setCurrentUser(null);
+
+            const registerUser = async (username, password) => {
+                if (!activeInvitation) {
+                    return { success: false, error: 'Geen geldige uitnodiging' };
+                }
+
+                if (users.find(u => u.username === username)) {
+                    return { success: false, error: 'Gebruikersnaam bestaat al' };
+                }
+
+                const hashedPassword = await hashPassword(password);
+                const newUser = {
+                    id: Date.now(),
+                    username,
+                    password: hashedPassword,
+                    role: activeInvitation.role,
+                    name: activeInvitation.name,
+                    email: activeInvitation.email,
+                    createdDate: new Date().toISOString()
+                };
+
+                setUsers([...users, newUser]);
+
+                // Mark invitation as used
+                const updatedInvitations = invitations.map(inv =>
+                    inv.token === activeInvitation.token ? { ...inv, used: true, usedDate: new Date().toISOString() } : inv
+                );
+                setInvitations(updatedInvitations);
+
+                // Auto-login
+                setCurrentUser(newUser);
+                setShowRegistration(false);
+                setActiveInvitation(null);
+
+                // Clear URL params
+                window.history.replaceState({}, document.title, window.location.pathname);
+
+                return { success: true };
+            };
+
+            const value = {
+                currentUser, login, logout, registerUser,
+                users, setUsers,
+                employees, setEmployees,
+                toolboxes, setToolboxes,
+                completions, setCompletions,
+                invitations, setInvitations,
+                emailConfig, setEmailConfig
+            };
+
+            if (showRegistration && activeInvitation) {
+                return (
+                    <AuthContext.Provider value={value}>
+                        <RegistrationPage invitation={activeInvitation} />
+                    </AuthContext.Provider>
+                );
+            }
+
+            if (!currentUser) {
+                return (
+                    <AuthContext.Provider value={value}>
+                        <LoginPage />
+                    </AuthContext.Provider>
+                );
+            }
+
+            return (
+                <AuthContext.Provider value={value}>
+                    {currentUser.role === 'admin' ? <AdminDashboard /> : <EmployeePortal />}
+                </AuthContext.Provider>
+            );
+        }
+
+        function RegistrationPage({ invitation }) {
+            const { registerUser } = React.useContext(AuthContext);
+            const [username, setUsername] = useState('');
+            const [password, setPassword] = useState('');
+            const [confirmPassword, setConfirmPassword] = useState('');
+            const [error, setError] = useState('');
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setError('');
+
+                if (!username || !password || !confirmPassword) {
+                    setError('Vul alle velden in');
+                    return;
+                }
+
+                if (password !== confirmPassword) {
+                    setError('Wachtwoorden komen niet overeen');
+                    return;
+                }
+
+                if (password.length < 6) {
+                    setError('Wachtwoord moet minimaal 6 tekens zijn');
+                    return;
+                }
+
+                const result = await registerUser(username, password);
+                if (!result.success) {
+                    setError(result.error);
+                }
+            };
+
+            return (
+                <div className="login-container">
+                    <div className="login-header">
+                        <h1>🔧 Welkom!</h1>
+                        <p>Maak je account aan</p>
+                    </div>
+
+                    <div className="welcome-box">
+                        <h2>Hallo {invitation.name}! 👋</h2>
+                        <p>Je bent uitgenodigd voor het Toolbox Management System</p>
+                        <p style={{ marginTop: '8px', fontSize: '14px', opacity: 0.9 }}>
+                            Rol: {invitation.role === 'admin' ? 'Administrator' : 'Medewerker'}
+                        </p>
+                    </div>
+
+                    {error && <div className="alert alert-error">{error}</div>}
+
+                    <form onSubmit={handleSubmit}>
+                        <div className="form-group">
+                            <label>Kies een gebruikersnaam *</label>
+                            <input
+                                type="text"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                placeholder="bijv. jan.janssen"
+                                required
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Wachtwoord * (minimaal 6 tekens)</label>
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="••••••••"
+                                required
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Bevestig wachtwoord *</label>
+                            <input
+                                type="password"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                placeholder="••••••••"
+                                required
+                            />
+                        </div>
+                        <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
+                            Account Aanmaken
+                        </button>
+                    </form>
+                </div>
+            );
+        }
+
+        function LoginPage() {
+            const { login } = React.useContext(AuthContext);
+            const [username, setUsername] = useState('');
+            const [password, setPassword] = useState('');
+            const [error, setError] = useState('');
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                const result = await login(username, password);
+                if (!result.success) setError(result.error);
+            };
+
+            return (
+                <div className="login-container">
+                    <div className="company-logo">
+                        <div className="company-logo-line">
+                            <div className="company-logo-stripe"></div>
+                            <div className="company-logo-stripe"></div>
+                            <div className="company-logo-stripe"></div>
+                            <div className="company-logo-stripe"></div>
+                            <div className="company-logo-stripe"></div>
+                            <div className="company-logo-stripe"></div>
+                            <div className="company-logo-stripe"></div>
+                        </div>
+                        <div style={{ fontSize: '16px', marginBottom: '3px' }}>CONTAINERS</div>
+                        <div style={{ fontSize: '32px', fontWeight: '900', marginBottom: '3px' }}>MAES</div>
+                        <div className="company-logo-line">
+                            <div className="company-logo-stripe"></div>
+                            <div className="company-logo-stripe"></div>
+                            <div className="company-logo-stripe"></div>
+                            <div className="company-logo-stripe"></div>
+                            <div className="company-logo-stripe"></div>
+                            <div className="company-logo-stripe"></div>
+                            <div className="company-logo-stripe"></div>
+                        </div>
+                    </div>
+                    <div className="login-header">
+                        <h1>Toolbox Manager</h1>
+                        <p>Containers Maes</p>
+                    </div>
+                    {error && <div className="alert alert-error">{error}</div>}
+                    <form onSubmit={handleSubmit}>
+                        <div className="form-group">
+                            <label>Gebruikersnaam</label>
+                            <input
+                                type="text"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Wachtwoord</label>
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
+                            Inloggen
+                        </button>
+                    </form>
+                </div>
+            );
+        }
+
+        function AdminDashboard() {
+            const { currentUser, logout } = React.useContext(AuthContext);
+            const [activeTab, setActiveTab] = useState('dashboard');
+
+            return (
+                <div className="app-container">
+                    <div className="header">
+                        <div className="header-top">
+                            <div className="header-left">
+                                <h1>Toolbox Management</h1>
+                                <p>Welkom, {currentUser.name}</p>
+                            </div>
+                            <div className="user-info">
+                                <span className="badge badge-purple">Administrator</span>
+                                <button className="btn btn-logout" onClick={logout}>Uitloggen</button>
+                            </div>
+                        </div>
+                        <div className="nav-tabs">
+                            <button className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>📊 Dashboard</button>
+                            <button className={`nav-tab ${activeTab === 'performance' ? 'active' : ''}`} onClick={() => setActiveTab('performance')}>📉 Performance</button>
+                            <button className={`nav-tab ${activeTab === 'email' ? 'active' : ''}`} onClick={() => setActiveTab('email')}>✉️ Email Setup</button>
+                            <button className={`nav-tab ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>👤 Gebruikers</button>
+                            <button className={`nav-tab ${activeTab === 'employees' ? 'active' : ''}`} onClick={() => setActiveTab('employees')}>👥 Personeel</button>
+                            <button className={`nav-tab ${activeTab === 'toolboxes' ? 'active' : ''}`} onClick={() => setActiveTab('toolboxes')}>📚 Toolboxen</button>
+                            <button className={`nav-tab ${activeTab === 'data' ? 'active' : ''}`} onClick={() => setActiveTab('data')}>💾 Data</button>
+                        </div>
+                    </div>
+                    <div className="content-card">
+                        {activeTab === 'dashboard' && <Dashboard />}
+                        {activeTab === 'performance' && <PerformanceOverview />}
+                        {activeTab === 'email' && <EmailSetup />}
+                        {activeTab === 'users' && <UserManagement />}
+                        {activeTab === 'employees' && <EmployeeManagement />}
+                        {activeTab === 'toolboxes' && <ToolboxManagement />}
+                        {activeTab === 'data' && <DataManagement />}
+                    </div>
+                </div>
+            );
+        }
+
+        function PerformanceOverview() {
+            const { employees, toolboxes, completions } = React.useContext(AuthContext);
+
+            // Bereken performance data per medewerker
+            const performanceData = employees.map(emp => {
+                // Vind alleen toolboxen die bij deze rol horen (GELDIGE toolboxen)
+                const requiredToolboxes = toolboxes.filter(tb => tb.roles.includes(emp.role));
+
+                // Filter alleen completions van geldige toolboxen die nog niet afgerond zijn
+                const incomplete = requiredToolboxes
+                    .map(tb => completions.find(c => c.employeeId === emp.id && c.toolboxId === tb.id))
+                    .filter(c => c && !c.completed);
+
+                // Bereken gemiddelde dagen bezig met openstaande toolboxen
+                let totalDays = 0;
+                let oldestToolbox = null;
+                let oldestDays = 0;
+
+                incomplete.forEach(comp => {
+                    const startDate = new Date(comp.startedDate);
+                    const now = new Date();
+                    const days = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
+                    totalDays += days;
+
+                    if (days > oldestDays) {
+                        oldestDays = days;
+                        const toolbox = toolboxes.find(tb => tb.id === comp.toolboxId);
+                        oldestToolbox = toolbox ? toolbox.title : 'Onbekend';
+                    }
+                });
+
+                const avgDays = incomplete.length > 0 ? Math.round(totalDays / incomplete.length) : 0;
+
+                // Bereken totale progress
+                let totalProgress = 0;
+                incomplete.forEach(comp => {
+                    if (comp.checkboxes.length > 0) {
+                        const checked = comp.checkboxes.filter(cb => cb.checked).length;
+                        totalProgress += (checked / comp.checkboxes.length) * 100;
+                    }
+                });
+                const avgProgress = incomplete.length > 0 ? Math.round(totalProgress / incomplete.length) : 0;
+
+                return {
+                    employee: emp,
+                    incompleteCount: incomplete.length,
+                    avgDaysInProgress: avgDays,
+                    oldestToolbox,
+                    oldestDays,
+                    avgProgress
+                };
+            });
+
+            // Filter alleen medewerkers met openstaande toolboxen en sorteer op slechtste performers
+            const slowPerformers = performanceData
+                .filter(p => p.incompleteCount > 0)
+                .sort((a, b) => {
+                    // Eerst sorteer op aantal openstaand
+                    if (b.incompleteCount !== a.incompleteCount) {
+                        return b.incompleteCount - a.incompleteCount;
+                    }
+                    // Dan op gemiddelde dagen bezig
+                    return b.avgDaysInProgress - a.avgDaysInProgress;
+                });
+
+            return (
+                <div>
+                    <h2 className="section-title">Performance Overzicht</h2>
+                    <p style={{ color: '#6b7280', marginBottom: '24px' }}>
+                        Medewerkers met openstaande toolboxen, gesorteerd op aantal en duur
+                    </p>
+
+                    {slowPerformers.length === 0 ? (
+                        <div className="alert alert-success">
+                            <strong>🎉 Geweldig!</strong> Alle medewerkers hebben hun toolboxen afgerond!
+                        </div>
+                    ) : (
+                        <div style={{ overflowX: 'auto' }}>
+                            <table style={{
+                                width: '100%',
+                                borderCollapse: 'collapse',
+                                background: 'white',
+                                borderRadius: '8px',
+                                overflow: 'hidden',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                            }}>
+                                <thead>
+                                    <tr style={{ background: '#f9fafb', borderBottom: '2px solid #e5e7eb' }}>
+                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600 }}>Rang</th>
+                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600 }}>Medewerker</th>
+                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600 }}>Functie</th>
+                                        <th style={{ padding: '12px', textAlign: 'center', fontWeight: 600 }}>Openstaand</th>
+                                        <th style={{ padding: '12px', textAlign: 'center', fontWeight: 600 }}>Gem. Tijd</th>
+                                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600 }}>Langst Bezig</th>
+                                        <th style={{ padding: '12px', textAlign: 'center', fontWeight: 600 }}>Progress</th>
+                                        <th style={{ padding: '12px', textAlign: 'center', fontWeight: 600 }}>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {slowPerformers.map((perf, idx) => {
+                                        const isUrgent = perf.avgDaysInProgress > 14 || perf.incompleteCount > 3;
+                                        const isWarning = perf.avgDaysInProgress > 7 || perf.incompleteCount > 1;
+
+                                        return (
+                                            <tr key={perf.employee.id} style={{
+                                                borderBottom: '1px solid #e5e7eb',
+                                                background: isUrgent ? '#fef2f2' : isWarning ? '#fffbeb' : 'white'
+                                            }}>
+                                                <td style={{ padding: '12px', fontWeight: 600, fontSize: '16px' }}>
+                                                    {idx + 1}
+                                                </td>
+                                                <td style={{ padding: '12px' }}>
+                                                    <strong>{perf.employee.name}</strong>
+                                                    <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                                                        {perf.employee.email}
+                                                    </div>
+                                                </td>
+                                                <td style={{ padding: '12px' }}>
+                                                    <span className="badge badge-blue">{perf.employee.role}</span>
+                                                </td>
+                                                <td style={{ padding: '12px', textAlign: 'center' }}>
+                                                    <span style={{
+                                                        background: perf.incompleteCount > 3 ? '#fca5a5' : perf.incompleteCount > 1 ? '#fcd34d' : '#93c5fd',
+                                                        color: perf.incompleteCount > 1 ? '#991b1b' : '#1e40af',
+                                                        padding: '4px 12px',
+                                                        borderRadius: '12px',
+                                                        fontWeight: 600,
+                                                        fontSize: '14px'
+                                                    }}>
+                                                        {perf.incompleteCount}
+                                                    </span>
+                                                </td>
+                                                <td style={{ padding: '12px', textAlign: 'center', fontWeight: 600 }}>
+                                                    {perf.avgDaysInProgress} dagen
+                                                </td>
+                                                <td style={{ padding: '12px' }}>
+                                                    <div style={{ fontSize: '13px' }}>
+                                                        {perf.oldestToolbox}
+                                                    </div>
+                                                    <div style={{ fontSize: '11px', color: '#6b7280' }}>
+                                                        {perf.oldestDays} dagen geleden gestart
+                                                    </div>
+                                                </td>
+                                                <td style={{ padding: '12px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+                                                        <div style={{
+                                                            width: '60px',
+                                                            height: '8px',
+                                                            background: '#e5e7eb',
+                                                            borderRadius: '4px',
+                                                            overflow: 'hidden'
+                                                        }}>
+                                                            <div style={{
+                                                                width: `${perf.avgProgress}%`,
+                                                                height: '100%',
+                                                                background: perf.avgProgress < 30 ? '#ef4444' : perf.avgProgress < 70 ? '#f59e0b' : '#10b981',
+                                                                transition: 'width 0.3s'
+                                                            }}></div>
+                                                        </div>
+                                                        <span style={{ fontSize: '12px', fontWeight: 600 }}>
+                                                            {perf.avgProgress}%
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td style={{ padding: '12px', textAlign: 'center' }}>
+                                                    {isUrgent ? (
+                                                        <span className="badge" style={{ background: '#dc2626', color: 'white', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>
+                                                            URGENT
+                                                        </span>
+                                                    ) : isWarning ? (
+                                                        <span className="badge" style={{ background: '#f59e0b', color: 'white', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>
+                                                            LET OP
+                                                        </span>
+                                                    ) : (
+                                                        <span className="badge" style={{ background: '#3b82f6', color: 'white', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>
+                                                            BEZIG
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+
+                            <div style={{ marginTop: '24px', padding: '16px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                                <h4 style={{ marginBottom: '12px', fontSize: '14px', fontWeight: 600, color: '#374151' }}>Legenda:</h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', fontSize: '13px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        <span className="badge" style={{ background: '#dc2626', color: 'white', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>URGENT</span>
+                                        <span style={{ marginLeft: '8px', color: '#6b7280' }}>&gt;14 dagen of &gt;3 toolboxen</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        <span className="badge" style={{ background: '#f59e0b', color: 'white', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>LET OP</span>
+                                        <span style={{ marginLeft: '8px', color: '#6b7280' }}>&gt;7 dagen of &gt;1 toolbox</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        <span className="badge" style={{ background: '#3b82f6', color: 'white', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>BEZIG</span>
+                                        <span style={{ marginLeft: '8px', color: '#6b7280' }}>Binnen normale termijn</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function Dashboard() {
+            const { employees, toolboxes, completions, emailConfig } = React.useContext(AuthContext);
+
+            // Filter alleen completions waarvan zowel de toolbox als de medewerker nog bestaat
+            const validCompletions = completions.filter(c => {
+                const toolboxExists = toolboxes.find(tb => tb.id === c.toolboxId);
+                const employeeExists = employees.find(emp => emp.id === c.employeeId);
+                return toolboxExists !== undefined && employeeExists !== undefined;
+            });
+
+            // EMPLOYEE-BASED COMPLIANCE: % medewerkers die AL hun toolboxen hebben afgerond
+            const compliantEmployees = employees.filter(emp => {
+                // Vind alle toolboxen die deze medewerker zou moeten hebben
+                const requiredToolboxes = toolboxes.filter(tb => tb.roles.includes(emp.role));
+                if (requiredToolboxes.length === 0) return true; // Als geen toolboxen nodig, is compliant
+
+                // Check of ALLE required toolboxen zijn afgerond
+                const allCompleted = requiredToolboxes.every(tb => {
+                    const completion = validCompletions.find(c =>
+                        c.employeeId === emp.id && c.toolboxId === tb.id
+                    );
+                    return completion && completion.completed;
+                });
+
+                return allCompleted;
+            });
+            const employeeComplianceRate = employees.length > 0 ? Math.round((compliantEmployees.length / employees.length) * 100) : 0;
+
+            // TOOLBOX-BASED METRICS: Totaal aantal toolboxen afgerond vs vereist
+            const totalCompletedToolboxes = validCompletions.filter(c => c.completed).length;
+            const totalRequiredToolboxes = employees.reduce((total, emp) => {
+                return total + toolboxes.filter(tb => tb.roles.includes(emp.role)).length;
+            }, 0);
+
+            return (
+                <div>
+                    <h2 className="section-title">Dashboard</h2>
+
+                    {!emailConfig && (
+                        <div className="alert alert-warning">
+                            ⚠️ <strong>Email niet geconfigureerd!</strong> Ga naar de "Email Setup" tab om automatische emails in te schakelen.
+                        </div>
+                    )}
+
+                    <div className="stats-grid">
+                        <div className="stat-card">
+                            <h3>{employees.length}</h3>
+                            <p>Medewerkers</p>
+                        </div>
+                        <div className="stat-card">
+                            <h3>{toolboxes.length}</h3>
+                            <p>Toolboxen</p>
+                        </div>
+                        <div className="stat-card">
+                            <h3>{employeeComplianceRate}%</h3>
+                            <p>Compliance</p>
+                            <small style={{ fontSize: '11px', opacity: 0.8 }}>
+                                {compliantEmployees.length}/{employees.length} compleet
+                            </small>
+                        </div>
+                        <div className="stat-card">
+                            <h3>{totalCompletedToolboxes}/{totalRequiredToolboxes}</h3>
+                            <p>Toolboxen Compleet</p>
+                            <small style={{ fontSize: '11px', opacity: 0.8 }}>
+                                {totalRequiredToolboxes > 0 ? Math.round((totalCompletedToolboxes / totalRequiredToolboxes) * 100) : 0}% afgerond
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function EmailSetup() {
+            const { emailConfig, setEmailConfig } = React.useContext(AuthContext);
+            const [formData, setFormData] = useState({
+                serviceId: emailConfig?.serviceId || '',
+                templateId: emailConfig?.templateId || '',
+                reminderTemplateId: emailConfig?.reminderTemplateId || '',
+                publicKey: emailConfig?.publicKey || ''
+            });
+            const [testEmail, setTestEmail] = useState('');
+            const [isTesting, setIsTesting] = useState(false);
+            const [testResult, setTestResult] = useState(null);
+
+            const saveConfig = () => {
+                if (!formData.serviceId || !formData.templateId || !formData.publicKey) {
+                    alert('Vul alle velden in!');
+                    return;
+                }
+                Storage.save('emailjs_config', formData);
+                setEmailConfig(formData);
+                emailjs.init(formData.publicKey);
+                alert('✅ Email configuratie opgeslagen!');
+            };
+
+            const sendTestEmail = async () => {
+                if (!emailConfig) {
+                    alert('Configureer eerst je EmailJS settings!');
+                    return;
+                }
+                if (!testEmail) {
+                    alert('Vul een test email adres in!');
+                    return;
+                }
+
+                setIsTesting(true);
+                setTestResult(null);
+
+                try {
+                    const response = await emailjs.send(
+                        emailConfig.serviceId,
+                        emailConfig.templateId,
+                        {
+                            to_email: testEmail,
+                            to_name: 'Test Gebruiker',
+                            invitation_link: window.location.href + '?invite=TEST123',
+                            company_name: 'Containers Maes'
+                        }
+                    );
+                    setTestResult({ success: true, message: 'Test email succesvol verstuurd! ✅' });
+                } catch (error) {
+                    setTestResult({ success: false, message: `Fout: ${error.text || error.message}` });
+                }
+                setIsTesting(false);
+            };
+
+            return (
+                <div>
+                    <h2 className="section-title">Email Setup - EmailJS</h2>
+
+                    <div className="setup-box">
+                        <h3>🚀 Snelle Setup (2 minuten)</h3>
+                        <ol>
+                            <li>Ga naar <a href="https://www.emailjs.com" target="_blank" style={{color: '#2563eb'}}>emailjs.com</a> en maak een gratis account</li>
+                            <li>Klik op "Add New Service" → Kies "Outlook"</li>
+                            <li>Voeg je email adres toe (<code>landerkenis.maes@outlook.com</code>)</li>
+                            <li>Ga naar "Email Templates" → Klik "Create New Template"</li>
+                            <li><strong>Template 1 - Uitnodiging:</strong>
+                                <pre style={{background: 'white', padding: '12px', borderRadius: '6px', marginTop: '8px', fontSize: '12px', overflow: 'auto'}}>
+{`Onderwerp: Uitnodiging voor Toolbox Management System
+
+Beste {{to_name}},
+
+Je bent uitgenodigd om deel te nemen aan het Toolbox Management System.
+
+Klik op deze link om je account te activeren:
+{{invitation_link}}
+
+Met vriendelijke groet,
+
+Containers Maes`}
+                                </pre>
+                            </li>
+                            <li><strong>Template 2 - Herinnering (Optioneel):</strong>
+                                <pre style={{background: 'white', padding: '12px', borderRadius: '6px', marginTop: '8px', fontSize: '12px', overflow: 'auto'}}>
+{`Onderwerp: Herinnering: Activeer je Toolbox Management Account
+
+Beste {{to_name}},
+
+Dit is een herinnering om je account te activeren voor het Toolbox Management System.
+
+Je registratie is nog niet voltooid. Klik op onderstaande link om je account nu te activeren:
+{{invitation_link}}
+
+Heb je vragen? Neem dan contact op met je leidinggevende.
+
+Met vriendelijke groet,
+
+Containers Maes`}
+                                </pre>
+                            </li>
+                            <li>Kopieer de <strong>Service ID</strong>, <strong>Template IDs</strong> en <strong>Public Key</strong> hieronder</li>
+                        </ol>
+                    </div>
+
+                    <div className="form-container">
+                        <h3>EmailJS Configuratie</h3>
+                        <div className="form-group">
+                            <label>Service ID *</label>
+                            <input
+                                type="text"
+                                value={formData.serviceId}
+                                onChange={(e) => setFormData({...formData, serviceId: e.target.value})}
+                                placeholder="bijv. service_abc123"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Template ID (Uitnodiging) *</label>
+                            <input
+                                type="text"
+                                value={formData.templateId}
+                                onChange={(e) => setFormData({...formData, templateId: e.target.value})}
+                                placeholder="bijv. template_xyz789"
+                            />
+                            <small style={{ fontSize: '12px', opacity: 0.7 }}>Voor nieuwe uitnodigingen</small>
+                        </div>
+                        <div className="form-group">
+                            <label>Reminder Template ID (Optioneel)</label>
+                            <input
+                                type="text"
+                                value={formData.reminderTemplateId}
+                                onChange={(e) => setFormData({...formData, reminderTemplateId: e.target.value})}
+                                placeholder="bijv. template_reminder123"
+                            />
+                            <small style={{ fontSize: '12px', opacity: 0.7 }}>
+                                Voor herinneringsmails na 5 dagen. Als leeg, wordt de gewone template gebruikt.
+                            </small>
+                        </div>
+                        <div className="form-group">
+                            <label>Public Key *</label>
+                            <input
+                                type="text"
+                                value={formData.publicKey}
+                                onChange={(e) => setFormData({...formData, publicKey: e.target.value})}
+                                placeholder="bijv. user_123abc456def"
+                            />
+                        </div>
+                        <button className="btn btn-primary" onClick={saveConfig}>
+                            💾 Configuratie Opslaan
+                        </button>
+                    </div>
+
+                    {emailConfig && (
+                        <div className="form-container">
+                            <h3>Test Email Versturen</h3>
+                            <div className="alert alert-success" style={{marginBottom: '16px'}}>
+                                ✅ EmailJS is geconfigureerd! Je kunt nu automatisch emails versturen.
+                            </div>
+                            <div className="form-group">
+                                <label>Test Email Adres</label>
+                                <input
+                                    type="email"
+                                    value={testEmail}
+                                    onChange={(e) => setTestEmail(e.target.value)}
+                                    placeholder="test@voorbeeld.nl"
+                                />
+                            </div>
+                            <button
+                                className="btn btn-success"
+                                onClick={sendTestEmail}
+                                disabled={isTesting}
+                            >
+                                {isTesting ? '📧 Versturen...' : '📧 Test Email Versturen'}
+                            </button>
+                            {testResult && (
+                                <div className={`alert ${testResult.success ? 'alert-success' : 'alert-error'}`} style={{marginTop: '16px'}}>
+                                    {testResult.message}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function UserManagement() {
+            const { users, setUsers, employees, setEmployees, completions, setCompletions, invitations, setInvitations, emailConfig } = React.useContext(AuthContext);
+            const [showForm, setShowForm] = useState(false);
+            const [formData, setFormData] = useState({ name: '', email: '', role: 'employee' });
+            const [error, setError] = useState('');
+            const [isSending, setIsSending] = useState(false);
+            const [sendResult, setSendResult] = useState(null);
+
+            const sendInvitation = async () => {
+                setError('');
+                setSendResult(null);
+
+                if (!formData.name || !formData.email) {
+                    setError('Vul naam en email in');
+                    return;
+                }
+
+                if (users.find(u => u.email === formData.email)) {
+                    setError('Email bestaat al');
+                    return;
+                }
+
+                const token = generateInviteToken();
+                const invitation = {
+                    id: Date.now(),
+                    token,
+                    email: formData.email,
+                    name: formData.name,
+                    role: formData.role,
+                    createdDate: new Date().toISOString(),
+                    used: false
+                };
+
+                setInvitations([...invitations, invitation]);
+
+                if (emailConfig) {
+                    setIsSending(true);
+                    try {
+                        const inviteLink = `https://cn7pgf2knn-lab.github.io/toolbox-management/?invite=${token}`;
+                        await emailjs.send(
+                            emailConfig.serviceId,
+                            emailConfig.templateId,
+                            {
+                                to_email: formData.email,
+                                to_name: formData.name,
+                                invitation_link: inviteLink,
+                                company_name: 'Containers Maes'
+                            }
+                        );
+                        setSendResult({
+                            success: true,
+                            message: `✅ Uitnodiging automatisch verstuurd naar ${formData.email}!`
+                        });
+                    } catch (error) {
+                        setSendResult({
+                            success: false,
+                            message: `⚠️ Uitnodiging aangemaakt maar email kon niet worden verstuurd: ${error.text || error.message}`,
+                            invitation
+                        });
+                    }
+                    setIsSending(false);
+                } else {
+                    setSendResult({
+                        success: true,
+                        message: '⚠️ Uitnodiging aangemaakt! Email configuratie ontbreekt - kopieer de link hieronder.',
+                        invitation
+                    });
+                }
+
+                setFormData({ name: '', email: '', role: 'employee' });
+                setShowForm(false);
+            };
+
+            const deleteUser = (id) => {
+                if (id === 1) {
+                    alert('Kan hoofd-admin niet verwijderen');
+                    return;
+                }
+                if (confirm('Weet je het zeker? Dit verwijdert ook het gekoppelde personeelslid en alle voortgang.')) {
+                    const user = users.find(u => u.id === id);
+
+                    // Zoek gekoppeld employee record
+                    const linkedEmployee = employees.find(e => e.userId === user.id || e.email === user.email);
+
+                    // Verwijder user
+                    setUsers(users.filter(u => u.id !== id));
+
+                    // Verwijder gekoppeld employee record en completions
+                    if (linkedEmployee) {
+                        setEmployees(employees.filter(e => e.id !== linkedEmployee.id));
+                        setCompletions(completions.filter(c => c.employeeId !== linkedEmployee.id));
+                    }
+                }
+            };
+
+            const copyToClipboard = (text) => {
+                navigator.clipboard.writeText(text);
+                alert('Link gekopieerd!');
+            };
+
+            const getDaysSinceInvitation = (createdDate) => {
+                const now = new Date();
+                const created = new Date(createdDate);
+                const diffTime = Math.abs(now - created);
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                return diffDays;
+            };
+
+            const [sendingReminders, setSendingReminders] = useState(false);
+            const [reminderResult, setReminderResult] = useState(null);
+
+            const sendReminders = async () => {
+                if (!emailConfig) {
+                    alert('Email configuratie ontbreekt! Ga naar Email Setup tab.');
+                    return;
+                }
+
+                // Vind uitnodigingen ouder dan 5 dagen die nog niet gebruikt zijn
+                const oldInvitations = invitations.filter(inv => {
+                    if (inv.used) return false;
+                    const days = getDaysSinceInvitation(inv.createdDate);
+                    return days >= 5;
+                });
+
+                if (oldInvitations.length === 0) {
+                    setReminderResult({
+                        success: true,
+                        message: 'Geen uitnodigingen ouder dan 5 dagen gevonden.'
+                    });
+                    return;
+                }
+
+                setSendingReminders(true);
+                setReminderResult(null);
+                let successCount = 0;
+                let failCount = 0;
+
+                // Gebruik reminder template als die bestaat, anders gewone template
+                const templateToUse = emailConfig.reminderTemplateId || emailConfig.templateId;
+
+                for (const inv of oldInvitations) {
+                    try {
+                        const inviteLink = `https://cn7pgf2knn-lab.github.io/toolbox-management/?invite=${inv.token}`;
+                        const daysAgo = getDaysSinceInvitation(inv.createdDate);
+
+                        await emailjs.send(
+                            emailConfig.serviceId,
+                            templateToUse,
+                            {
+                                to_email: inv.email,
+                                to_name: inv.name,
+                                invitation_link: inviteLink,
+                                company_name: 'Containers Maes',
+                                days_ago: daysAgo
+                            }
+                        );
+                        successCount++;
+                    } catch (error) {
+                        console.error('Reminder fout voor', inv.email, error);
+                        failCount++;
+                    }
+                }
+
+                setSendingReminders(false);
+                setReminderResult({
+                    success: failCount === 0,
+                    message: `✅ ${successCount} herinneringsmail(s) verstuurd${failCount > 0 ? `, ${failCount} mislukt` : ''}!`
+                });
+            };
+
+            const deleteInvitation = (id) => {
+                if (confirm('Uitnodiging verwijderen?')) {
+                    setInvitations(invitations.filter(i => i.id !== id));
+                }
+            };
+
+            // Bereken stats
+            const activeUsersCount = users.filter(u => u.role !== 'admin').length;
+            const pendingInvitationsCount = invitations.filter(i => !i.used).length;
+
+            // Count per functie (van employees) - DYNAMISCH voor alle functie types
+            const storedCustom = localStorage.getItem('custom_job_types');
+            const customTypes = storedCustom ? JSON.parse(storedCustom) : [];
+            const allJobTypesForDisplay = ['chauffeur', 'bediende', 'magazijn', 'manager', ...customTypes];
+
+            const jobTypeIcons = {
+                chauffeur: '👷',
+                bediende: '👔',
+                magazijn: '📦',
+                manager: '👨‍💼'
+            };
+
+            return (
+                <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                        <div>
+                            <h2 className="section-title" style={{ marginBottom: '8px' }}>Gebruikersbeheer</h2>
+                            <div className={`email-status ${emailConfig ? 'configured' : 'not-configured'}`}>
+                                {emailConfig ? '✅ Auto-emails actief' : '⚠️ Configureer emails'}
+                            </div>
+                        </div>
+                        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
+                            {showForm ? '✕ Sluiten' : '+ Uitnodigen'}
+                        </button>
+                    </div>
+
+                    <div className="stats-grid" style={{ marginBottom: '20px' }}>
+                        <div className="stat-card">
+                            <h3>{activeUsersCount}</h3>
+                            <p>Geregistreerd</p>
+                        </div>
+                        <div className="stat-card">
+                            <h3>{pendingInvitationsCount}</h3>
+                            <p>Wacht op Registratie</p>
+                        </div>
+                        {allJobTypesForDisplay.map(type => {
+                            const count = employees.filter(e => e.role === type).length;
+                            const icon = jobTypeIcons[type] || '👤';
+                            return (
+                                <div key={type} className="stat-card">
+                                    <h3>{count}</h3>
+                                    <p>{icon} {type.charAt(0).toUpperCase() + type.slice(1)}</p>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {showForm && (
+                        <div className="form-container">
+                            <h3>Nieuwe Gebruiker Uitnodigen</h3>
+                            {error && <div className="alert alert-error">{error}</div>}
+                            <div className="form-group">
+                                <label>Naam *</label>
+                                <input
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    placeholder="Jan Janssen"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Email *</label>
+                                <input
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    placeholder="jan@bedrijf.nl"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Rol</label>
+                                <select value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })}>
+                                    <option value="employee">Medewerker</option>
+                                    <option value="admin">Administrator</option>
+                                </select>
+                            </div>
+                            <button
+                                className="btn btn-primary"
+                                onClick={sendInvitation}
+                                disabled={isSending}
+                            >
+                                {isSending ? '📧 Versturen...' : emailConfig ? '📧 Verstuur Automatisch' : '📧 Maak Uitnodiging'}
+                            </button>
+                        </div>
+                    )}
+
+                    {sendResult && (
+                        <div className={`alert ${sendResult.success && !sendResult.invitation ? 'alert-success' : 'alert-warning'}`}>
+                            <strong>{sendResult.message}</strong>
+                            {sendResult.invitation && (
+                                <>
+                                    <p style={{marginTop: '12px'}}><strong>Uitnodigingslink:</strong></p>
+                                    <div style={{background: 'white', padding: '12px', borderRadius: '6px', marginTop: '8px', wordBreak: 'break-all', fontFamily: 'monospace', fontSize: '13px'}}>
+                                        {window.location.origin}{window.location.pathname}?invite={sendResult.invitation.token}
+                                    </div>
+                                    <button
+                                        className="btn btn-secondary"
+                                        onClick={() => copyToClipboard(`https://cn7pgf2knn-lab.github.io/toolbox-management/?invite=${sendResult.invitation.token}`)}
+                                        style={{marginTop: '12px', marginRight: '8px'}}
+                                    >
+                                        📋 Kopieer Link
+                                    </button>
+                                </>
+                            )}
+                            <button className="btn btn-secondary" onClick={() => setSendResult(null)} style={{marginTop: '12px'}}>
+                                Sluiten
+                            </button>
+                        </div>
+                    )}
+
+                    <h3 style={{ marginTop: '24px', marginBottom: '12px' }}>Actieve Gebruikers</h3>
+                    {users.map(user => {
+                        const linkedEmployee = employees.find(e => e.userId === user.id || e.email === user.email);
+                        return (
+                            <div key={user.id} className="list-item">
+                                <div>
+                                    <h3>{user.name} (@{user.username})</h3>
+                                    <p>
+                                        {user.email} •
+                                        <span className={`badge ${user.role === 'admin' ? 'badge-purple' : 'badge-blue'}`}>
+                                            {user.role === 'admin' ? 'Admin' : (linkedEmployee ? linkedEmployee.role : '👤 Medewerker')}
+                                        </span>
+                                        {linkedEmployee && <span style={{ fontSize: '12px' }}>🔗 {linkedEmployee.name}</span>}
+                                    </p>
+                                </div>
+                                <div className="list-item-actions">
+                                    {user.id !== 1 && (
+                                        <button className="btn btn-danger" onClick={() => deleteUser(user.id)}>Verwijder</button>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+
+                    {invitations.filter(i => !i.used).length > 0 && (
+                        <>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px', marginBottom: '12px' }}>
+                                <h3 style={{ margin: 0 }}>Openstaande Uitnodigingen</h3>
+                                <button
+                                    className="btn btn-warning"
+                                    onClick={sendReminders}
+                                    disabled={sendingReminders}
+                                    style={{ fontSize: '14px', padding: '8px 16px' }}
+                                >
+                                    {sendingReminders ? '📧 Versturen...' : '📧 Stuur Herinneringen (5+ dagen)'}
+                                </button>
+                            </div>
+
+                            {reminderResult && (
+                                <div className={`alert ${reminderResult.success ? 'alert-success' : 'alert-error'}`} style={{ marginBottom: '12px' }}>
+                                    <strong>{reminderResult.message}</strong>
+                                    <button className="btn btn-secondary" onClick={() => setReminderResult(null)} style={{ marginTop: '8px' }}>
+                                        Sluiten
+                                    </button>
+                                </div>
+                            )}
+
+                            {invitations.filter(i => !i.used).map(inv => {
+                                // Zoek employee record met zelfde email om functie te tonen
+                                const linkedEmployee = employees.find(e => e.email === inv.email);
+                                const daysSince = getDaysSinceInvitation(inv.createdDate);
+                                const needsReminder = daysSince >= 5;
+
+                                return (
+                                    <div key={inv.id} className="list-item" style={{ border: needsReminder ? '2px solid #ff9800' : undefined }}>
+                                        <div>
+                                            <h3>{inv.name}</h3>
+                                            <p>
+                                                {inv.email} •
+                                                <span className="badge badge-yellow">⏳ Wacht op registratie</span>
+                                                <span style={{ fontSize: '12px', marginLeft: '8px', opacity: 0.7 }}>
+                                                    {daysSince === 0 ? 'Vandaag verstuurd' :
+                                                     daysSince === 1 ? '1 dag geleden' :
+                                                     `${daysSince} dagen geleden`}
+                                                </span>
+                                                {needsReminder && (
+                                                    <span className="badge" style={{ marginLeft: '8px', background: '#ff9800', color: 'white' }}>
+                                                        ⚠️ Reminder nodig
+                                                    </span>
+                                                )}
+                                                {linkedEmployee && (
+                                                    <span className="badge badge-blue" style={{ marginLeft: '8px' }}>
+                                                        {linkedEmployee.role}
+                                                    </span>
+                                                )}
+                                            </p>
+                                        </div>
+                                        <div className="list-item-actions">
+                                            <button
+                                                className="btn btn-secondary"
+                                                onClick={() => copyToClipboard(`https://cn7pgf2knn-lab.github.io/toolbox-management/?invite=${inv.token}`)}
+                                            >
+                                                📋 Kopieer Link
+                                            </button>
+                                            <button
+                                                className="btn btn-danger"
+                                                onClick={() => deleteInvitation(inv.id)}
+                                            >
+                                                Verwijder
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </>
+                    )}
+                </div>
+            );
+        }
+
+        function EmployeeManagement() {
+            const { employees, setEmployees, users, setUsers, invitations, setInvitations, toolboxes, completions, setCompletions, emailConfig } = React.useContext(AuthContext);
+            const [showForm, setShowForm] = useState(false);
+            const [formData, setFormData] = useState({ name: '', email: '', role: 'chauffeur', userId: '' });
+            const [syncStatus, setSyncStatus] = useState(null);
+            const [isSyncing, setIsSyncing] = useState(false);
+
+            const addEmployee = () => {
+                const newEmployee = {
+                    id: Date.now(),
+                    ...formData,
+                    userId: formData.userId ? parseInt(formData.userId) : null,
+                    createdDate: new Date().toISOString()
+                };
+                setEmployees([...employees, newEmployee]);
+
+                const roleToolboxes = toolboxes.filter(tb => tb.roles.includes(formData.role));
+                const newCompletions = roleToolboxes.map(tb => ({
+                    id: Date.now() + Math.random(),
+                    employeeId: newEmployee.id,
+                    toolboxId: tb.id,
+                    startedDate: new Date().toISOString(),
+                    completedDate: null,
+                    completed: false,
+                    checkboxes: tb.checkboxes.map(cb => ({ ...cb, checked: false })),
+                    signature: null,
+                    pdfConfirmed: false
+                }));
+                setCompletions([...completions, ...newCompletions]);
+                setFormData({ name: '', email: '', role: 'chauffeur', userId: '' });
+                setShowForm(false);
+            };
+
+            const deleteEmployee = (id) => {
+                if (confirm('Weet je het zeker? Dit verwijdert ook de gekoppelde gebruiker en alle voortgang.')) {
+                    const employee = employees.find(e => e.id === id);
+
+                    // Zoek gekoppelde user
+                    const linkedUser = users.find(u => u.id === employee.userId || u.email === employee.email);
+
+                    // Verwijder employee en completions
+                    setEmployees(employees.filter(e => e.id !== id));
+                    setCompletions(completions.filter(c => c.employeeId !== id));
+
+                    // Verwijder gekoppelde user (behalve admin)
+                    if (linkedUser && linkedUser.id !== 1) {
+                        setUsers(users.filter(u => u.id !== linkedUser.id));
+                    }
+                }
+            };
+
+            const processSyncData = async (syncData) => {
+                try {
+                    const newEmployees = syncData.employees || [];
+                    const deletedCount = syncData.deletedCount || 0;
+                    const currentEmployees = syncData.currentEmployees || employees;
+
+                                // Check voor Excel sync zonder wijzigingen
+                                if (newEmployees.length === 0 && deletedCount === 0) {
+                                    setSyncStatus({ success: true, message: 'Geen wijzigingen gevonden in sync bestand', count: 0 });
+                                    setIsSyncing(false);
+                                    return;
+                                }
+
+                                // Filter alleen nieuwe (niet-bestaande emails) - gebruik currentEmployees na deletions
+                                const existingEmails = new Set(currentEmployees.map(e => e.email.toLowerCase()));
+                                const trulyNew = newEmployees.filter(emp => !existingEmails.has(emp.email.toLowerCase()));
+
+                                // Als er geen toevoegingen zijn maar wel verwijderingen, ga door voor melding
+                                if (trulyNew.length === 0 && deletedCount === 0) {
+                                    setSyncStatus({ success: true, message: 'Alle medewerkers uit sync bestand bestaan al', count: 0 });
+                                    setIsSyncing(false);
+                                    return;
+                                }
+
+                                // Als er alleen verwijderingen zijn (geen toevoegingen)
+                                if (trulyNew.length === 0 && deletedCount > 0) {
+                                    setSyncStatus({
+                                        success: true,
+                                        message: `✅ Sync compleet! ${deletedCount} verwijderd`,
+                                        count: 0,
+                                        deleted: deletedCount
+                                    });
+                                    setIsSyncing(false);
+                                    return;
+                                }
+
+                                // Voeg nieuwe medewerkers toe
+                                const addedEmployees = [];
+                                const newInvitations = [];
+                                const allNewCompletions = [];
+
+                                for (const emp of trulyNew) {
+                                    // Voeg employee toe
+                                    const newEmployee = {
+                                        ...emp,
+                                        id: Date.now() + Math.random(),
+                                        createdDate: new Date().toISOString()
+                                    };
+                                    addedEmployees.push(newEmployee);
+
+                                    // Auto-assign toolboxes
+                                    const roleToolboxes = toolboxes.filter(tb => tb.roles.includes(emp.role));
+                                    const newCompletions = roleToolboxes.map(tb => ({
+                                        id: Date.now() + Math.random(),
+                                        employeeId: newEmployee.id,
+                                        toolboxId: tb.id,
+                                        startedDate: new Date().toISOString(),
+                                        completedDate: null,
+                                        completed: false,
+                                        checkboxes: tb.checkboxes.map(cb => ({ ...cb, checked: false })),
+                                        signature: null,
+                                        pdfConfirmed: false
+                                    }));
+                                    allNewCompletions.push(...newCompletions);
+
+                                    // Maak uitnodiging
+                                    const token = generateInviteToken();
+                                    const invitation = {
+                                        id: Date.now() + Math.random(),
+                                        token,
+                                        email: emp.email,
+                                        name: emp.name,
+                                        role: 'employee',
+                                        createdDate: new Date().toISOString(),
+                                        used: false
+                                    };
+                                    newInvitations.push(invitation);
+
+                                    // Verstuur email als geconfigureerd
+                                    if (emailConfig) {
+                                        try {
+                                            const inviteLink = `${window.location.origin}${window.location.pathname}?invite=${token}`;
+                                            await emailjs.send(
+                                                emailConfig.serviceId,
+                                                emailConfig.templateId,
+                                                {
+                                                    to_email: emp.email,
+                                                    to_name: emp.name,
+                                                    invitation_link: inviteLink,
+                                                    company_name: 'Containers Maes'
+                                                }
+                                            );
+                                        } catch (emailError) {
+                                            console.error('Email fout voor', emp.email, emailError);
+                                        }
+                                    }
+                                }
+
+                                // Update state - gebruik functional updates voor correcte state na deletions
+                                setEmployees(prevEmployees => [...prevEmployees, ...addedEmployees]);
+                                setInvitations(prevInvitations => [...prevInvitations, ...newInvitations]);
+                                setCompletions(prevCompletions => [...prevCompletions, ...allNewCompletions]);
+
+                    // Maak uitgebreide sync melding
+                    let syncMessage = '✅ Sync compleet! ';
+                    const messages = [];
+                    if (trulyNew.length > 0) messages.push(`${trulyNew.length} toegevoegd`);
+                    if (deletedCount > 0) messages.push(`${deletedCount} verwijderd`);
+                    syncMessage += messages.join(', ');
+
+                    setSyncStatus({
+                        success: true,
+                        message: syncMessage,
+                        count: trulyNew.length,
+                        deleted: deletedCount,
+                        employees: trulyNew
+                    });
+                    setIsSyncing(false);
+                } catch (error) {
+                    setSyncStatus({ success: false, message: `Fout bij importeren: ${error.message}` });
+                    setIsSyncing(false);
+                }
+            };
+
+            const [showPasteJSON, setShowPasteJSON] = useState(false);
+            const [pastedJSON, setPastedJSON] = useState('');
+
+            const importFromPaste = async () => {
+                setIsSyncing(true);
+                setSyncStatus(null);
+                try {
+                    const syncData = JSON.parse(pastedJSON);
+                    await processSyncData(syncData);
+                    setPastedJSON('');
+                    setShowPasteJSON(false);
+                } catch (error) {
+                    setSyncStatus({ success: false, message: `Ongeldige JSON: ${error.message}` });
+                    setIsSyncing(false);
+                }
+            };
+
+            const importFromExcel = () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.xlsx,.xls';
+
+                input.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    setIsSyncing(true);
+                    setSyncStatus(null);
+
+                    try {
+                        const data = await file.arrayBuffer();
+                        const workbook = XLSX.read(data);
+                        const worksheet = workbook.Sheets['Personeel'];
+
+                        if (!worksheet) {
+                            setSyncStatus({ success: false, message: 'Sheet "Personeel" niet gevonden in Excel bestand' });
+                            setIsSyncing(false);
+                            return;
+                        }
+
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                        // Filter en converteer Excel data naar employees
+                        const excelEmployees = jsonData
+                            .filter(row => row.Naam && row.Email && row.Naam !== 'Naam') // Skip header
+                            .map(row => ({
+                                name: String(row.Naam),
+                                email: String(row.Email),
+                                role: String(row.Functie).toLowerCase().trim(),
+                                startDate: row.Startdatum ? String(row.Startdatum) : null,
+                                id: Date.now() + Math.random(),
+                                createdDate: new Date().toISOString(),
+                                userId: null
+                            }))
+                            ;
+
+                        if (excelEmployees.length === 0) {
+                            setSyncStatus({ success: false, message: 'Geen geldige medewerkers gevonden in Excel' });
+                            setIsSyncing(false);
+                            return;
+                        }
+
+                        // Auto-add nieuwe functies als custom job types
+                        const storedCustom = localStorage.getItem('custom_job_types');
+                        const customTypes = storedCustom ? JSON.parse(storedCustom) : [];
+                        const standardTypes = ['chauffeur', 'bediende', 'magazijn', 'manager'];
+                        const allCurrentTypes = [...standardTypes, ...customTypes];
+
+                        const newJobTypes = [];
+                        excelEmployees.forEach(emp => {
+                            if (!allCurrentTypes.includes(emp.role) && !newJobTypes.includes(emp.role)) {
+                                newJobTypes.push(emp.role);
+                            }
+                        });
+
+                        if (newJobTypes.length > 0) {
+                            const updatedCustomTypes = [...customTypes, ...newJobTypes];
+                            localStorage.setItem('custom_job_types', JSON.stringify(updatedCustomTypes));
+                        }
+
+                        // VOLLEDIGE SYNC: Verwijder mensen die NIET meer in Excel staan
+                        const excelEmails = excelEmployees.map(e => e.email.toLowerCase());
+                        const employeesToDelete = employees.filter(emp =>
+                            !excelEmails.includes(emp.email.toLowerCase())
+                        );
+
+                        const deletedCount = employeesToDelete.length;
+
+                        // Verzamel alle IDs die verwijderd moeten worden
+                        if (deletedCount > 0) {
+                            const employeeIdsToDelete = employeesToDelete.map(emp => emp.id);
+                            const emailsToDelete = employeesToDelete.map(emp => emp.email.toLowerCase());
+                            const userIdsToDelete = [];
+
+                            employeesToDelete.forEach(emp => {
+                                const linkedUser = users.find(u => u.id === emp.userId || u.email === emp.email);
+                                if (linkedUser && linkedUser.id !== 1) { // Nooit admin verwijderen
+                                    userIdsToDelete.push(linkedUser.id);
+                                }
+                            });
+
+                            // Voer alle verwijderingen in één keer uit
+                            setEmployees(prevEmps => prevEmps.filter(emp => !employeeIdsToDelete.includes(emp.id)));
+                            setUsers(prevUsers => prevUsers.filter(u => !userIdsToDelete.includes(u.id)));
+                            setCompletions(prevComp => prevComp.filter(c => !employeeIdsToDelete.includes(c.employeeId)));
+                            setInvitations(prevInvs => prevInvs.filter(inv => !emailsToDelete.includes(inv.email.toLowerCase())));
+                        }
+
+                        // Bereken de huidige employees na verwijderingen (voor correcte filtering)
+                        const remainingEmployees = employees.filter(emp => !employeesToDelete.map(e => e.id).includes(emp.id));
+
+                        // Voeg nieuwe employees toe zoals voorheen
+                        await processSyncData({
+                            employees: excelEmployees,
+                            deletedCount,
+                            currentEmployees: remainingEmployees
+                        });
+
+                    } catch (error) {
+                        setSyncStatus({ success: false, message: `Fout bij lezen Excel: ${error.message}` });
+                        setIsSyncing(false);
+                    }
+                };
+
+                input.click();
+            };
+
+            const getProgress = (employeeId) => {
+                // Filter alleen completions waarvan de toolbox nog bestaat
+                const empCompletions = completions.filter(c => {
+                    if (c.employeeId !== employeeId) return false;
+                    const toolboxExists = toolboxes.find(tb => tb.id === c.toolboxId);
+                    return toolboxExists !== undefined;
+                });
+                const completed = empCompletions.filter(c => c.completed).length;
+                const total = empCompletions.length;
+                return { completed, total, percentage: total > 0 ? (completed / total) * 100 : 0 };
+            };
+
+            const exportCompletionReport = () => {
+                // Maak een Excel bestand met de huidige staat van alle completions
+                const reportData = [];
+
+                // Helper functie voor datum formatting
+                const formatDateTime = (isoString) => {
+                    if (!isoString) return '';
+                    const date = new Date(isoString);
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const year = date.getFullYear();
+                    const hours = String(date.getHours()).padStart(2, '0');
+                    const minutes = String(date.getMinutes()).padStart(2, '0');
+                    return `${day}/${month}/${year} om ${hours}:${minutes}`;
+                };
+
+                // Header row
+                const headers = ['Naam', 'Email', 'Functie', ...toolboxes.map(tb => tb.title)];
+                reportData.push(headers);
+
+                // Data rows - één per employee
+                employees.forEach(emp => {
+                    const row = [emp.name, emp.email, emp.role];
+
+                    // Voor elke toolbox, check of deze employee het heeft afgerond
+                    toolboxes.forEach(tb => {
+                        const completion = completions.find(c =>
+                            c.employeeId === emp.id && c.toolboxId === tb.id
+                        );
+
+                        if (!completion) {
+                            // Toolbox niet toegewezen aan deze functie
+                            row.push('Niet van toepassing');
+                        } else if (completion.completed) {
+                            // Afgerond met datum en tijd
+                            const dateTime = formatDateTime(completion.completedDate);
+                            row.push(`✅ Afgerond op ${dateTime}`);
+                        } else {
+                            // In progress - toon percentage en startdatum
+                            const total = completion.checkboxes.length;
+                            const checked = completion.checkboxes.filter(cb => cb.checked).length;
+                            const percentage = total > 0 ? Math.round((checked / total) * 100) : 0;
+                            const startDate = formatDateTime(completion.startedDate);
+                            row.push(`${percentage}% (gestart ${startDate})`);
+                        }
+                    });
+
+                    reportData.push(row);
+                });
+
+                // Maak Excel workbook
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(reportData);
+
+                // Pas kolombreedte aan
+                const colWidths = [
+                    { wch: 25 }, // Naam
+                    { wch: 30 }, // Email
+                    { wch: 15 }, // Functie
+                    ...toolboxes.map(() => ({ wch: 35 })) // Toolbox kolommen (breder voor datum/tijd)
+                ];
+                ws['!cols'] = colWidths;
+
+                XLSX.utils.book_append_sheet(wb, ws, 'Toolbox Overzicht');
+
+                // Download het bestand
+                const timestamp = new Date().toISOString().split('T')[0];
+                XLSX.writeFile(wb, `toolbox-overzicht-${timestamp}.xlsx`);
+            };
+
+            const availableUsers = users.filter(u => u.role === 'employee' && !employees.find(e => e.userId === u.id));
+
+            return (
+                <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+                        <h2 className="section-title" style={{ marginBottom: 0 }}>Personeelsbeheer</h2>
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                            <button className="btn btn-success" onClick={importFromExcel} disabled={isSyncing}>
+                                {isSyncing ? '🔄 Importeren...' : '📊 Upload Excel'}
+                            </button>
+                            <button className="btn btn-success" onClick={exportCompletionReport}>
+                                📥 Export Voortgang
+                            </button>
+                            <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
+                                {showForm ? '✕ Sluiten' : '+ Nieuw Personeelslid'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {syncStatus && (
+                        <div className={`alert ${syncStatus.success ? 'alert-success' : 'alert-error'}`}>
+                            <strong>{syncStatus.message}</strong>
+                            {syncStatus.employees && syncStatus.employees.length > 0 && (
+                                <div style={{ marginTop: '12px' }}>
+                                    <p><strong>Nieuwe medewerkers:</strong></p>
+                                    <ul style={{ marginLeft: '20px', marginTop: '8px' }}>
+                                        {syncStatus.employees.map((emp, idx) => (
+                                            <li key={idx}>{emp.name} ({emp.email}) - {emp.role}</li>
+                                        ))}
+                                    </ul>
+                                    {emailConfig && (
+                                        <p style={{ marginTop: '8px', fontSize: '14px' }}>
+                                            ✉️ Uitnodigingsmails zijn verstuurd!
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                            <button className="btn btn-secondary" onClick={() => setSyncStatus(null)} style={{ marginTop: '12px' }}>
+                                Sluiten
+                            </button>
+                        </div>
+                    )}
+
+<div className="alert alert-info" style={{ marginBottom: '20px' }}>
+                        <strong>💡 Excel Synchronisatie & Rapportage</strong>
+                        <p style={{ marginTop: '8px', fontSize: '14px' }}>
+                            <strong>Importeren:</strong> Update je <code>personeel_template.xlsx</code> → Klik "📊 Upload Excel" → Klaar! 🎉<br/>
+                            <strong>Exporteren:</strong> Klik "📥 Export Voortgang" voor een actueel overzicht van alle toolbox completions!<br/>
+                            <em>De export toont alleen actieve medewerkers en huidige toolboxen.</em>
+                        </p>
+                    </div>
+
+                    {showForm && (
+                        <div className="form-container">
+                            <h3>Nieuw Personeelslid</h3>
+                            <div className="form-group">
+                                <label>Naam</label>
+                                <input
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Email</label>
+                                <input
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Functie/Groep</label>
+                                <select value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })}>
+                                    {(() => {
+                                        const storedCustom = localStorage.getItem('custom_job_types');
+                                        const customTypes = storedCustom ? JSON.parse(storedCustom) : [];
+                                        const allTypes = ['chauffeur', 'bediende', 'magazijn', 'manager', ...customTypes];
+                                        return allTypes.map(type => (
+                                            <option key={type} value={type}>
+                                                {type.charAt(0).toUpperCase() + type.slice(1)}
+                                            </option>
+                                        ));
+                                    })()}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Koppel aan gebruiker (optioneel)</label>
+                                <select value={formData.userId} onChange={(e) => setFormData({ ...formData, userId: e.target.value })}>
+                                    <option value="">Geen gebruiker</option>
+                                    {availableUsers.map(u => (
+                                        <option key={u.id} value={u.id}>{u.name} (@{u.username})</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <button className="btn btn-primary" onClick={addEmployee}>Toevoegen</button>
+                        </div>
+                    )}
+
+                    {employees.map(emp => {
+                        const progress = getProgress(emp.id);
+                        const linkedUser = users.find(u => u.id === emp.userId);
+                        const empToolboxes = toolboxes.filter(tb => tb.roles.includes(emp.role));
+
+                        return (
+                            <div key={emp.id} style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                                    <div>
+                                        <h3>{emp.name}</h3>
+                                        <p style={{ color: '#6b7280', fontSize: '14px' }}>
+                                            {emp.email} • <span className="badge badge-blue">{emp.role}</span>
+                                            {linkedUser && <span style={{ marginLeft: '8px' }}>🔗 @{linkedUser.username}</span>}
+                                        </p>
+                                    </div>
+                                    <button className="btn btn-danger" onClick={() => deleteEmployee(emp.id)}>Verwijder</button>
+                                </div>
+                                <div>
+                                    <strong>Voortgang: {progress.completed} / {progress.total}</strong>
+                                    <div className="progress-bar">
+                                        <div className="progress-fill" style={{ width: `${progress.percentage}%` }}></div>
+                                    </div>
+                                </div>
+                                <p style={{ marginTop: '12px', fontSize: '14px', color: '#6b7280' }}>
+                                    Toegewezen toolboxen: {empToolboxes.length}
+                                </p>
+                            </div>
+                        );
+                    })}
+
+                    {employees.length === 0 && (
+                        <p style={{ textAlign: 'center', color: '#6b7280', padding: '40px' }}>
+                            Nog geen medewerkers. Klik op "+ Nieuw Personeelslid" om te beginnen.
+                        </p>
+                    )}
+                </div>
+            );
+        }
+
+        function ToolboxManagement() {
+            const { toolboxes, setToolboxes, employees, completions, setCompletions, emailConfig, invitations, setInvitations } = React.useContext(AuthContext);
+            const [showForm, setShowForm] = useState(false);
+            const [editingId, setEditingId] = useState(null);
+            const [formData, setFormData] = useState({ title: '', description: '', roles: [], checkboxes: [], pdfId: null, pdfName: '' });
+            const [newCheckbox, setNewCheckbox] = useState('');
+            const [newJobType, setNewJobType] = useState('');
+            const [customJobTypes, setCustomJobTypes] = useState(() => {
+                const stored = localStorage.getItem('custom_job_types');
+                return stored ? JSON.parse(stored) : [];
+            });
+
+            const allJobTypes = ['chauffeur', 'bediende', 'magazijn', 'manager', ...customJobTypes];
+
+            const addCustomJobType = () => {
+                if (!newJobType.trim()) return;
+                const jobType = newJobType.trim().toLowerCase();
+                if (allJobTypes.includes(jobType)) {
+                    alert('Deze functie bestaat al!');
+                    return;
+                }
+                const updated = [...customJobTypes, jobType];
+                setCustomJobTypes(updated);
+                localStorage.setItem('custom_job_types', JSON.stringify(updated));
+                setNewJobType('');
+            };
+            const [assignResult, setAssignResult] = useState(null);
+
+            const addToolbox = () => {
+                if (!formData.title || formData.roles.length === 0) {
+                    alert('Vul titel in en selecteer minimaal 1 functie');
+                    return;
+                }
+                const newToolbox = {
+                    id: Date.now(),
+                    ...formData,
+                    createdDate: new Date().toISOString()
+                };
+                setToolboxes([...toolboxes, newToolbox]);
+
+                // Auto-assign aan alle bestaande medewerkers met de juiste functie
+                const affectedEmployees = employees.filter(emp =>
+                    formData.roles.includes(emp.role)
+                );
+
+                const newCompletions = affectedEmployees.map(emp => ({
+                    id: Date.now() + Math.random(),
+                    employeeId: emp.id,
+                    toolboxId: newToolbox.id,
+                    startedDate: new Date().toISOString(),
+                    completedDate: null,
+                    completed: false,
+                    checkboxes: formData.checkboxes.map(cb => ({ ...cb, checked: false })),
+                    signature: null,
+                    pdfConfirmed: false
+                }));
+
+                if (newCompletions.length > 0) {
+                    setCompletions([...completions, ...newCompletions]);
+                    setAssignResult({
+                        success: true,
+                        message: `✅ Toolbox aangemaakt en automatisch toegewezen aan ${affectedEmployees.length} medewerker(s)!`,
+                        employees: affectedEmployees
+                    });
+                } else {
+                    setAssignResult({
+                        success: true,
+                        message: '✅ Toolbox aangemaakt! Er zijn nog geen medewerkers met deze functie(s).',
+                        employees: []
+                    });
+                }
+
+                setFormData({ title: '', description: '', roles: [], checkboxes: [], pdfId: null, pdfName: '' });
+                setShowForm(false);
+            };
+
+            const editToolbox = (toolbox) => {
+                setEditingId(toolbox.id);
+                setFormData({
+                    title: toolbox.title,
+                    description: toolbox.description,
+                    roles: [...toolbox.roles],
+                    checkboxes: [...toolbox.checkboxes],
+                    pdfId: toolbox.pdfId || null,
+                    pdfName: toolbox.pdfName || ''
+                });
+                setShowForm(true);
+            };
+
+            const saveEdit = async () => {
+                if (!formData.title || formData.roles.length === 0) {
+                    alert('Vul titel in en selecteer minimaal 1 functie');
+                    return;
+                }
+
+                const oldToolbox = toolboxes.find(tb => tb.id === editingId);
+                const newRoles = formData.roles.filter(role => !oldToolbox.roles.includes(role));
+
+                // Update toolbox
+                const updatedToolbox = {
+                    ...oldToolbox,
+                    title: formData.title,
+                    description: formData.description,
+                    roles: formData.roles,
+                    checkboxes: formData.checkboxes,
+                    pdfId: formData.pdfId,
+                    pdfName: formData.pdfName
+                };
+                setToolboxes(toolboxes.map(tb => tb.id === editingId ? updatedToolbox : tb));
+
+                // Als er nieuwe functies zijn toegevoegd
+                if (newRoles.length > 0) {
+                    const newEmployees = employees.filter(emp =>
+                        newRoles.includes(emp.role) &&
+                        !completions.find(c => c.employeeId === emp.id && c.toolboxId === editingId)
+                    );
+
+                    if (newEmployees.length > 0) {
+                        const newCompletions = newEmployees.map(emp => ({
+                            id: Date.now() + Math.random(),
+                            employeeId: emp.id,
+                            toolboxId: editingId,
+                            startedDate: new Date().toISOString(),
+                            completedDate: null,
+                            completed: false,
+                            checkboxes: formData.checkboxes.map(cb => ({ ...cb, checked: false })),
+                            signature: null,
+                            pdfConfirmed: false
+                        }));
+                        setCompletions([...completions, ...newCompletions]);
+
+                        // Verstuur emails naar nieuwe medewerkers
+                        if (emailConfig) {
+                            for (const emp of newEmployees) {
+                                try {
+                                    await emailjs.send(
+                                        emailConfig.serviceId,
+                                        emailConfig.templateId,
+                                        {
+                                            to_email: emp.email,
+                                            to_name: emp.name,
+                                            invitation_link: `${window.location.origin}${window.location.pathname}`,
+                                            company_name: 'Containers Maes',
+                                            custom_message: `Je hebt een nieuwe toolbox toegewezen gekregen: "${formData.title}". Log in om deze te bekijken.`
+                                        }
+                                    );
+                                } catch (error) {
+                                    console.error('Email fout voor', emp.email, error);
+                                }
+                            }
+                        }
+
+                        setAssignResult({
+                            success: true,
+                            message: `✅ Toolbox bijgewerkt en toegewezen aan ${newEmployees.length} nieuwe medewerker(s)!${emailConfig ? ' Emails zijn verstuurd.' : ''}`,
+                            employees: newEmployees
+                        });
+                    } else {
+                        setAssignResult({
+                            success: true,
+                            message: '✅ Toolbox bijgewerkt! Geen nieuwe medewerkers om aan toe te wijzen.',
+                            employees: []
+                        });
+                    }
+                } else {
+                    setAssignResult({
+                        success: true,
+                        message: '✅ Toolbox succesvol bijgewerkt!',
+                        employees: []
+                    });
+                }
+
+                setFormData({ title: '', description: '', roles: [], checkboxes: [], pdfId: null, pdfName: '' });
+                setShowForm(false);
+                setEditingId(null);
+            };
+
+            const deleteToolbox = async (id) => {
+                if (confirm('Weet je het zeker?')) {
+                    // Vind toolbox en verwijder PDF uit IndexedDB indien aanwezig
+                    const toolbox = toolboxes.find(t => t.id === id);
+                    if (toolbox && toolbox.pdfId) {
+                        try {
+                            await PDFStorage.deletePDF(toolbox.pdfId);
+                            console.log('✅ PDF verwijderd uit IndexedDB:', toolbox.pdfId);
+                        } catch (error) {
+                            console.error('Fout bij verwijderen PDF uit IndexedDB:', error);
+                        }
+                    }
+                    setToolboxes(toolboxes.filter(t => t.id !== id));
+                }
+            };
+
+            const cancelEdit = () => {
+                setEditingId(null);
+                setFormData({ title: '', description: '', roles: [], checkboxes: [], pdfId: null, pdfName: '' });
+                setShowForm(false);
+            };
+
+            const addCheckbox = () => {
+                if (newCheckbox.trim()) {
+                    setFormData({
+                        ...formData,
+                        checkboxes: [...formData.checkboxes, { id: Date.now(), label: newCheckbox }]
+                    });
+                    setNewCheckbox('');
+                }
+            };
+
+            const toggleRole = (role) => {
+                const roles = formData.roles.includes(role)
+                    ? formData.roles.filter(r => r !== role)
+                    : [...formData.roles, role];
+                setFormData({ ...formData, roles });
+            };
+
+            const uploadPDF = () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.pdf';
+
+                input.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    if (file.type !== 'application/pdf') {
+                        alert('Alleen PDF bestanden zijn toegestaan');
+                        return;
+                    }
+
+                    // Check file size (max 10MB voor IndexedDB)
+                    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+                    if (file.size > maxSize) {
+                        alert(`PDF te groot! Maximum 10MB toegestaan.\n\nJouw bestand: ${(file.size / 1024 / 1024).toFixed(1)}MB\n\nComprimeer de PDF eerst.`);
+                        return;
+                    }
+
+                    // Converteer naar base64 en sla op in IndexedDB
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        const pdfId = 'pdf_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+                        try {
+                            // Sla PDF op in IndexedDB
+                            await PDFStorage.savePDF(pdfId, e.target.result, file.name);
+
+                            // Sla alleen referentie op in formData
+                            setFormData({
+                                ...formData,
+                                pdfId: pdfId,
+                                pdfName: file.name
+                            });
+
+                            console.log('✅ PDF opgeslagen in IndexedDB:', file.name, `(${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+                        } catch (error) {
+                            console.error('Fout bij opslaan PDF:', error);
+                            alert('Fout bij opslaan PDF. Probeer opnieuw of gebruik een kleiner bestand.');
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                };
+
+                input.click();
+            };
+
+            const removePDF = async () => {
+                // Verwijder PDF uit IndexedDB indien aanwezig
+                if (formData.pdfId) {
+                    try {
+                        await PDFStorage.deletePDF(formData.pdfId);
+                        console.log('✅ PDF verwijderd uit IndexedDB:', formData.pdfId);
+                    } catch (error) {
+                        console.error('Fout bij verwijderen PDF uit IndexedDB:', error);
+                    }
+                }
+                setFormData({ ...formData, pdfId: null, pdfName: '' });
+            };
+
+            return (
+                <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                        <h2 className="section-title" style={{ marginBottom: 0 }}>Toolbox Beheer</h2>
+                        <button className="btn btn-primary" onClick={() => {
+                            if (showForm && !editingId) {
+                                setShowForm(false);
+                            } else {
+                                setEditingId(null);
+                                setFormData({ title: '', description: '', roles: [], checkboxes: [], pdfId: null, pdfName: '' });
+                                setShowForm(true);
+                            }
+                        }}>
+                            {showForm && !editingId ? '✕ Sluiten' : '+ Nieuwe Toolbox'}
+                        </button>
+                    </div>
+
+                    {assignResult && (
+                        <div className="alert alert-success">
+                            <strong>{assignResult.message}</strong>
+                            {assignResult.employees.length > 0 && (
+                                <div style={{ marginTop: '12px' }}>
+                                    <p><strong>Toegewezen aan:</strong></p>
+                                    <ul style={{ marginLeft: '20px', marginTop: '8px' }}>
+                                        {assignResult.employees.map((emp, idx) => (
+                                            <li key={idx}>{emp.name} ({emp.role})</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                            <button className="btn btn-secondary" onClick={() => setAssignResult(null)} style={{ marginTop: '12px' }}>
+                                Sluiten
+                            </button>
+                        </div>
+                    )}
+
+                    {showForm && (
+                        <div className="form-container">
+                            <h3>{editingId ? 'Toolbox Bewerken' : 'Nieuwe Toolbox'}</h3>
+                            <div className="form-group">
+                                <label>Titel *</label>
+                                <input
+                                    type="text"
+                                    value={formData.title}
+                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                    placeholder="Bijv. Veiligheid op de werkvloer"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Beschrijving</label>
+                                <textarea
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    rows="3"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>📄 PDF Document (optioneel)</label>
+                                <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '8px' }}>
+                                    Upload een PDF die medewerkers moeten lezen, begrijpen en ermee akkoord gaan
+                                </p>
+                                {!formData.pdfId ? (
+                                    <button type="button" className="btn btn-secondary" onClick={uploadPDF}>
+                                        📤 Upload PDF
+                                    </button>
+                                ) : (
+                                    <div style={{ background: '#f0fdf4', padding: '12px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span>📄</span>
+                                            <span style={{ fontWeight: 600 }}>{formData.pdfName}</span>
+                                        </div>
+                                        <button type="button" className="btn btn-danger" style={{ padding: '6px 12px', fontSize: '13px' }} onClick={removePDF}>
+                                            Verwijder
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="form-group">
+                                <label>Voor welke functie/groep? *</label>
+                                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '8px' }}>
+                                    {allJobTypes.map(role => (
+                                        <label key={role} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.roles.includes(role)}
+                                                onChange={() => toggleRole(role)}
+                                                style={{ marginRight: '8px', width: '18px', height: '18px' }}
+                                            />
+                                            <span style={{ textTransform: 'capitalize' }}>{role}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                                <div style={{ marginTop: '12px', padding: '12px', background: '#f9fafb', borderRadius: '6px' }}>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600 }}>
+                                        ➕ Nieuw functietype toevoegen:
+                                    </label>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        <input
+                                            type="text"
+                                            value={newJobType}
+                                            onChange={(e) => setNewJobType(e.target.value)}
+                                            placeholder="Bijv. technicus, dispatcher..."
+                                            onKeyPress={(e) => e.key === 'Enter' && addCustomJobType()}
+                                            style={{ flex: 1 }}
+                                        />
+                                        <button type="button" className="btn btn-secondary" onClick={addCustomJobType}>
+                                            Toevoegen
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label>Bevestigingspunten:</label>
+                                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                                    <input
+                                        type="text"
+                                        value={newCheckbox}
+                                        onChange={(e) => setNewCheckbox(e.target.value)}
+                                        placeholder="Bijv. Ik heb dit gelezen en begrepen"
+                                        onKeyPress={(e) => e.key === 'Enter' && addCheckbox()}
+                                        style={{ flex: 1 }}
+                                    />
+                                    <button className="btn btn-secondary" onClick={addCheckbox}>+</button>
+                                </div>
+                                {formData.checkboxes.map(cb => (
+                                    <div key={cb.id} style={{ padding: '8px', background: 'white', borderRadius: '6px', marginBottom: '6px', display: 'flex', justifyContent: 'space-between' }}>
+                                        <span>✓ {cb.label}</span>
+                                        <button
+                                            className="btn btn-danger"
+                                            style={{ padding: '4px 8px', fontSize: '12px', marginRight: 0 }}
+                                            onClick={() => setFormData({ ...formData, checkboxes: formData.checkboxes.filter(c => c.id !== cb.id) })}
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                            <button className="btn btn-primary" onClick={editingId ? saveEdit : addToolbox}>
+                                {editingId ? '💾 Wijzigingen Opslaan' : 'Toolbox Aanmaken'}
+                            </button>
+                            {editingId && (
+                                <button className="btn btn-secondary" onClick={cancelEdit} style={{ marginLeft: '8px' }}>
+                                    Annuleren
+                                </button>
+                            )}
+                        </div>
+                    )}
+
+                    {toolboxes.map(tb => (
+                        <div key={tb.id} className="list-item">
+                            <div>
+                                <h3>{tb.title}</h3>
+                                <p>{tb.description}</p>
+                                <p style={{ marginTop: '8px' }}>
+                                    {tb.roles.map(r => <span key={r} className="badge badge-blue">{r}</span>)}
+                                    <span style={{ marginLeft: '8px', fontSize: '12px', color: '#6b7280' }}>
+                                        {tb.checkboxes.length} bevestigingspunten
+                                    </span>
+                                    {tb.pdfId && (
+                                        <span style={{ marginLeft: '8px' }}>
+                                            <span className="badge badge-green">📄 PDF bijgevoegd</span>
+                                        </span>
+                                    )}
+                                </p>
+                            </div>
+                            <div className="list-item-actions">
+                                <button className="btn btn-secondary" onClick={() => editToolbox(tb)}>✏️ Bewerken</button>
+                                <button className="btn btn-danger" onClick={() => deleteToolbox(tb.id)}>Verwijder</button>
+                            </div>
+                        </div>
+                    ))}
+
+                    {toolboxes.length === 0 && (
+                        <p style={{ textAlign: 'center', color: '#6b7280', padding: '40px' }}>
+                            Nog geen toolboxen. Klik op "+ Nieuwe Toolbox" om te beginnen.
+                        </p>
+                    )}
+                </div>
+            );
+        }
+
+        function DataManagement() {
+            const { users, employees, toolboxes, completions } = React.useContext(AuthContext);
+            const [exportData, setExportData] = useState('');
+            const [importData, setImportData] = useState('');
+            const [backupInfo, setBackupInfo] = useState(null);
+
+            useEffect(() => {
+                // Check of er een automatische backup is
+                const autoBackup = localStorage.getItem('auto_backup');
+                if (autoBackup) {
+                    try {
+                        const backup = JSON.parse(autoBackup);
+                        setBackupInfo({
+                            timestamp: backup.timestamp,
+                            userCount: backup.users?.length || 0,
+                            employeeCount: backup.employees?.length || 0,
+                            toolboxCount: backup.toolboxes?.length || 0
+                        });
+                    } catch (e) {
+                        console.error('Backup info laden mislukt', e);
+                    }
+                }
+            }, []);
+
+            const handleExport = () => {
+                setExportData(Storage.exportAll());
+            };
+
+            const handleDownload = () => {
+                const data = Storage.exportAll();
+                const blob = new Blob([data], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `toolbox-backup-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+            };
+
+            const handleImport = () => {
+                if (Storage.importAll(importData)) {
+                    alert('Import succesvol! Pagina wordt herladen...');
+                    window.location.reload();
+                } else {
+                    alert('Import mislukt. Check de JSON syntax.');
+                }
+            };
+
+            const restoreAutoBackup = () => {
+                const autoBackup = localStorage.getItem('auto_backup');
+                if (!autoBackup) {
+                    alert('Geen automatische backup gevonden!');
+                    return;
+                }
+
+                if (!confirm('Weet je het zeker? Dit herstelt de laatste automatisch opgeslagen versie van je data.')) {
+                    return;
+                }
+
+                try {
+                    const backup = JSON.parse(autoBackup);
+
+                    // Herstel alle data
+                    if (backup.users) Storage.save('users_complete', backup.users);
+                    if (backup.employees) Storage.save('employees_complete', backup.employees);
+                    if (backup.toolboxes) Storage.save('toolboxes_complete', backup.toolboxes);
+                    if (backup.completions) Storage.save('completions_complete', backup.completions);
+                    if (backup.invitations) Storage.save('invitations_complete', backup.invitations);
+                    if (backup.emailConfig) Storage.save('emailjs_config', backup.emailConfig);
+
+                    alert('✅ Backup succesvol hersteld! Pagina wordt herladen...');
+                    window.location.reload();
+                } catch (e) {
+                    alert('❌ Backup herstellen mislukt: ' + e.message);
+                }
+            };
+
+            const downloadAutoBackup = () => {
+                const autoBackup = localStorage.getItem('auto_backup');
+                if (!autoBackup) {
+                    alert('Geen automatische backup gevonden!');
+                    return;
+                }
+
+                try {
+                    const backup = JSON.parse(autoBackup);
+                    const timestamp = new Date(backup.timestamp).toISOString().replace(/[:.]/g, '-').slice(0, -5);
+                    const filename = `toolbox-auto-backup-${timestamp}.json`;
+
+                    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                } catch (e) {
+                    alert('❌ Download mislukt: ' + e.message);
+                }
+            };
+
+            const syncMissingCompletions = () => {
+                if (!confirm('Dit herstelt ontbrekende toolbox toewijzingen voor alle medewerkers. Doorgaan?')) {
+                    return;
+                }
+
+                let addedCount = 0;
+
+                // Voor elke toolbox, check of alle employees met de juiste rol een completion hebben
+                toolboxes.forEach(toolbox => {
+                    const relevantEmployees = employees.filter(emp => toolbox.roles.includes(emp.role));
+
+                    relevantEmployees.forEach(emp => {
+                        // Check of deze employee al een completion heeft voor deze toolbox
+                        const hasCompletion = completions.some(c =>
+                            c.employeeId === emp.id && c.toolboxId === toolbox.id
+                        );
+
+                        if (!hasCompletion) {
+                            // Maak nieuwe completion aan
+                            const newCompletion = {
+                                id: Date.now() + Math.random(),
+                                employeeId: emp.id,
+                                toolboxId: toolbox.id,
+                                startedDate: new Date().toISOString(),
+                                completedDate: null,
+                                completed: false,
+                                checkboxes: toolbox.checkboxes.map(cb => ({ ...cb, checked: false })),
+                                signature: null,
+                                pdfConfirmed: false
+                            };
+                            setCompletions(prev => [...prev, newCompletion]);
+                            addedCount++;
+                        }
+                    });
+                });
+
+                alert(`✅ Sync compleet! ${addedCount} ontbrekende toewijzing(en) hersteld.`);
+                if (addedCount > 0) {
+                    setTimeout(() => window.location.reload(), 1000);
+                }
+            };
+
+            return (
+                <div>
+                    <h2 className="section-title">Data Beheer</h2>
+                    <div className="stats-grid">
+                        <div className="stat-card">
+                            <h3>{users.length}</h3>
+                            <p>Gebruikers</p>
+                        </div>
+                        <div className="stat-card">
+                            <h3>{employees.length}</h3>
+                            <p>Medewerkers</p>
+                        </div>
+                        <div className="stat-card">
+                            <h3>{toolboxes.length}</h3>
+                            <p>Toolboxen</p>
+                        </div>
+                        <div className="stat-card">
+                            <h3>{completions.length}</h3>
+                            <p>Completions</p>
+                        </div>
+                    </div>
+
+                    {backupInfo && (
+                        <div className="form-container" style={{ background: '#f0fdf4', border: '2px solid #10b981' }}>
+                            <h3>🔄 Automatische Backup Beschikbaar</h3>
+                            <div style={{ marginBottom: '16px' }}>
+                                <p><strong>Laatste backup:</strong> {new Date(backupInfo.timestamp).toLocaleString('nl-NL')}</p>
+                                <p style={{ marginTop: '8px', fontSize: '14px', color: '#065f46' }}>
+                                    📊 {backupInfo.userCount} gebruikers • {backupInfo.employeeCount} medewerkers • {backupInfo.toolboxCount} toolboxen
+                                </p>
+                            </div>
+                            <div className="alert alert-info" style={{ marginBottom: '16px' }}>
+                                💡 <strong>Automatische backup actief!</strong> Bij elke wijziging wordt je data automatisch opgeslagen.
+                                Als je browser cache wordt gewist, kun je je data terughalen.
+                            </div>
+                            <div className="alert" style={{ background: '#fff3cd', border: '2px solid #ffc107', marginBottom: '16px' }}>
+                                ⚠️ <strong>Extra veiligheid!</strong> Download regelmatig een backup bestand naar je computer.
+                                Zo ben je 100% veilig, ook als je browser volledig opnieuw wordt geïnstalleerd.
+                            </div>
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <button className="btn btn-success" onClick={restoreAutoBackup}>
+                                    🔄 Herstel Laatste Backup
+                                </button>
+                                <button className="btn btn-primary" onClick={downloadAutoBackup}>
+                                    📥 Download Backup Bestand
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="form-container" style={{ background: '#fff3cd', border: '2px solid #ffc107' }}>
+                        <h3>🔧 Herstel Ontbrekende Toewijzingen</h3>
+                        <p style={{ marginBottom: '16px', color: '#856404' }}>
+                            Als medewerkers toolboxen niet zien die ze wel zouden moeten hebben, gebruik dan deze functie.
+                            Dit controleert alle toolboxen en medewerkers en herstelt ontbrekende toewijzingen.
+                        </p>
+                        <button className="btn btn-primary" onClick={syncMissingCompletions}>
+                            🔄 Sync Toolbox Toewijzingen
+                        </button>
+                    </div>
+
+                    <div className="form-container">
+                        <h3>📤 Export Data</h3>
+                        <p style={{ marginBottom: '16px', color: '#6b7280' }}>
+                            Backup je volledige systeem voor migratie of archivering.
+                        </p>
+                        <button className="btn btn-primary" onClick={handleExport}>Exporteer JSON</button>
+                        <button className="btn btn-success" onClick={handleDownload}>📥 Download Backup</button>
+                        {exportData && (
+                            <textarea
+                                style={{ width: '100%', height: '150px', marginTop: '12px', fontFamily: 'monospace', fontSize: '12px', padding: '12px', border: '2px solid #e5e7eb', borderRadius: '8px' }}
+                                value={exportData}
+                                readOnly
+                                onClick={(e) => e.target.select()}
+                            />
+                        )}
+                    </div>
+
+                    <div className="form-container">
+                        <h3>📥 Import Data</h3>
+                        <textarea
+                            style={{ width: '100%', height: '150px', marginBottom: '12px', fontFamily: 'monospace', fontSize: '12px', padding: '12px', border: '2px solid #e5e7eb', borderRadius: '8px' }}
+                            value={importData}
+                            onChange={(e) => setImportData(e.target.value)}
+                            placeholder="Plak hier de JSON data..."
+                        />
+                        <button className="btn btn-primary" onClick={handleImport}>Importeer</button>
+                    </div>
+                </div>
+            );
+        }
+
+        function EmployeePortal() {
+            const { currentUser, logout, employees, setEmployees, toolboxes, completions, setCompletions } = React.useContext(AuthContext);
+
+            // Vind employee op basis van email (automatische koppeling)
+            const myEmployee = employees.find(e => e.email === currentUser.email || e.userId === currentUser.id);
+            const myCompletions = myEmployee ? completions.filter(c => c.employeeId === myEmployee.id) : [];
+
+            // AUTOMATISCHE FIX: Check bij laden of er ontbrekende toolboxen zijn
+            useEffect(() => {
+                if (!myEmployee) return;
+
+                const myToolboxes = toolboxes.filter(tb => tb.roles.includes(myEmployee.role));
+                const missingToolboxes = myToolboxes.filter(tb =>
+                    !completions.some(c => c.employeeId === myEmployee.id && c.toolboxId === tb.id)
+                );
+
+                if (missingToolboxes.length > 0) {
+                    const newCompletions = missingToolboxes.map(tb => ({
+                        id: Date.now() + Math.random(),
+                        employeeId: myEmployee.id,
+                        toolboxId: tb.id,
+                        startedDate: new Date().toISOString(),
+                        completedDate: null,
+                        completed: false,
+                        checkboxes: tb.checkboxes.map(cb => ({ ...cb, checked: false })),
+                        signature: null,
+                        pdfConfirmed: false
+                    }));
+                    setCompletions([...completions, ...newCompletions]);
+                }
+            }, [myEmployee?.id, toolboxes.length]);
+
+            const getToolboxInfo = (completionId) => {
+                const completion = myCompletions.find(c => c.id === completionId);
+                if (!completion) return null;
+                return toolboxes.find(tb => tb.id === completion.toolboxId);
+            };
+
+            const markAsComplete = (completionId) => {
+                setCompletions(completions.map(c =>
+                    c.id === completionId
+                        ? { ...c, completed: true, completedDate: new Date().toISOString() }
+                        : c
+                ));
+            };
+
+            const toggleCheckbox = (completionId, checkboxId) => {
+                setCompletions(completions.map(c => {
+                    if (c.id === completionId) {
+                        return {
+                            ...c,
+                            checkboxes: c.checkboxes.map(cb =>
+                                cb.id === checkboxId ? { ...cb, checked: !cb.checked } : cb
+                            )
+                        };
+                    }
+                    return c;
+                }));
+            };
+
+            const togglePDFConfirmation = (completionId) => {
+                setCompletions(completions.map(c =>
+                    c.id === completionId ? { ...c, pdfConfirmed: !c.pdfConfirmed } : c
+                ));
+            };
+
+            const [showPDF, setShowPDF] = useState(null);
+
+            const openPDF = async (pdfId) => {
+                try {
+                    const pdfData = await PDFStorage.getPDF(pdfId);
+                    if (pdfData) {
+                        setShowPDF(pdfData);
+                    } else {
+                        alert('PDF niet gevonden. Probeer de pagina opnieuw te laden.');
+                    }
+                } catch (error) {
+                    console.error('Fout bij ophalen PDF:', error);
+                    alert('Fout bij laden van PDF. Probeer opnieuw.');
+                }
+            };
+
+            const closePDF = () => {
+                setShowPDF(null);
+            };
+
+            // PERSOONLIJKE DOCUMENTEN FUNCTIONALITEIT
+            const uploadDocument = (documentType) => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*,.pdf';
+                input.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    // Check file size (max 10MB voor IndexedDB)
+                    if (file.size > 10 * 1024 * 1024) {
+                        alert('Bestand te groot! Maximum 10MB toegestaan.');
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        const docId = 'doc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+                        try {
+                            // Sla bestand op in IndexedDB
+                            await PDFStorage.savePersonalDoc(docId, e.target.result, file.name, documentType);
+
+                            const newDocument = {
+                                id: docId,
+                                type: documentType,
+                                fileName: file.name,
+                                uploadDate: new Date().toISOString()
+                                // fileData wordt niet meer opgeslagen, alleen in IndexedDB
+                            };
+
+                            // Update employee documents
+                            setEmployees(employees.map(emp => {
+                                if (emp.id === myEmployee.id) {
+                                    const docs = emp.documents || [];
+                                    return { ...emp, documents: [...docs, newDocument] };
+                                }
+                                return emp;
+                            }));
+
+                            console.log('✅ Persoonlijk document opgeslagen in IndexedDB:', file.name);
+                        } catch (error) {
+                            console.error('Fout bij opslaan document:', error);
+                            alert('Fout bij opslaan document. Probeer opnieuw.');
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                };
+                input.click();
+            };
+
+            const deleteDocument = async (docId) => {
+                if (confirm('Weet je zeker dat je dit document wilt verwijderen?')) {
+                    try {
+                        // Verwijder uit IndexedDB
+                        await PDFStorage.deletePersonalDoc(docId);
+                        console.log('✅ Document verwijderd uit IndexedDB:', docId);
+                    } catch (error) {
+                        console.error('Fout bij verwijderen document uit IndexedDB:', error);
+                    }
+
+                    setEmployees(employees.map(emp => {
+                        if (emp.id === myEmployee.id) {
+                            return {
+                                ...emp,
+                                documents: (emp.documents || []).filter(doc => doc.id !== docId)
+                            };
+                        }
+                        return emp;
+                    }));
+                }
+            };
+
+            const viewDocument = async (docId) => {
+                try {
+                    const fileData = await PDFStorage.getPersonalDoc(docId);
+                    if (fileData) {
+                        window.open(fileData, '_blank');
+                    } else {
+                        alert('Document niet gevonden. Probeer de pagina opnieuw te laden.');
+                    }
+                } catch (error) {
+                    console.error('Fout bij ophalen document:', error);
+                    alert('Fout bij laden van document. Probeer opnieuw.');
+                }
+            };
+
+            const myDocuments = myEmployee?.documents || [];
+
+            return (
+                <div className="app-container">
+                    {showPDF && (
+                        <div style={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: 'rgba(0,0,0,0.95)',
+                            zIndex: 10000,
+                            display: 'flex',
+                            flexDirection: 'column'
+                        }}>
+                            <div style={{
+                                background: '#FFC700',
+                                padding: '20px',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                            }}>
+                                <h2 style={{ margin: 0, color: '#000' }}>📄 Verplicht Document - Lees Aandachtig</h2>
+                                <button
+                                    onClick={closePDF}
+                                    style={{
+                                        background: '#000',
+                                        color: '#FFC700',
+                                        border: 'none',
+                                        padding: '12px 24px',
+                                        fontSize: '16px',
+                                        fontWeight: 'bold',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    ✕ Sluiten
+                                </button>
+                            </div>
+                            <iframe
+                                src={showPDF}
+                                style={{
+                                    flex: 1,
+                                    border: 'none',
+                                    width: '100%',
+                                    background: 'white'
+                                }}
+                            />
+                        </div>
+                    )}
+                    <div className="header">
+                        <div className="header-top">
+                            <div className="header-left">
+                                <h1>Mijn Toolboxen</h1>
+                                <p>Welkom, {currentUser.name}</p>
+                            </div>
+                            <div className="user-info">
+                                <span className="badge badge-blue">Medewerker</span>
+                                <button className="btn btn-logout" onClick={logout}>Uitloggen</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="content-card">
+                        {!myEmployee ? (
+                            <>
+                                <h2>Welkom!</h2>
+                                <p style={{ color: '#6b7280', marginTop: '12px' }}>
+                                    Je account wordt gekoppeld aan je personeelsprofiel. Neem contact op met je beheerder.
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <h2 className="section-title">Mijn Toolboxen</h2>
+                                <p style={{ marginBottom: '20px', color: '#6b7280' }}>
+                                    Functie: <span className="badge badge-blue">{myEmployee.role}</span>
+                                </p>
+
+                                {myCompletions.length === 0 ? (
+                                    <div className="alert alert-info">
+                                        Er zijn momenteel geen toolboxen toegewezen aan jouw functie.
+                                    </div>
+                                ) : myCompletions.every(c => c.completed) ? (
+                                    // ALLE TOOLBOXEN AFGEROND - Toon overzicht
+                                    <>
+                                        <div className="alert alert-success" style={{ marginBottom: '24px' }}>
+                                            <h3 style={{ margin: 0, marginBottom: '8px', fontSize: '20px' }}>
+                                                Je hebt alle toolboxen ingevuld!
+                                            </h3>
+                                            <p style={{ margin: 0, opacity: 0.9 }}>
+                                                Bedankt voor het voltooien van al je verplichte toolboxen.
+                                            </p>
+                                        </div>
+
+                                        <div style={{
+                                            background: 'white',
+                                            border: '2px solid #e5e7eb',
+                                            borderRadius: '12px',
+                                            padding: '24px'
+                                        }}>
+                                            <h3 style={{ marginBottom: '16px', fontSize: '18px' }}>
+                                                Voltooide Toolboxen:
+                                            </h3>
+                                            <div style={{ display: 'grid', gap: '12px' }}>
+                                                {myCompletions.map(completion => {
+                                                    const toolbox = getToolboxInfo(completion.id);
+                                                    if (!toolbox) return null;
+
+                                                    const completedDate = new Date(completion.completedDate);
+                                                    const formattedDate = `${completedDate.getDate().toString().padStart(2, '0')}/${(completedDate.getMonth() + 1).toString().padStart(2, '0')}/${completedDate.getFullYear()} om ${completedDate.getHours().toString().padStart(2, '0')}:${completedDate.getMinutes().toString().padStart(2, '0')}`;
+
+                                                    return (
+                                                        <div key={completion.id} style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'space-between',
+                                                            padding: '16px',
+                                                            background: '#f0fdf4',
+                                                            borderRadius: '8px',
+                                                            border: '1px solid #86efac'
+                                                        }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                                                                <span style={{ fontSize: '24px', marginRight: '12px' }}>✅</span>
+                                                                <div>
+                                                                    <strong style={{ display: 'block', marginBottom: '4px' }}>
+                                                                        {toolbox.title}
+                                                                    </strong>
+                                                                    <span style={{ fontSize: '13px', color: '#6b7280' }}>
+                                                                        Voltooid op {formattedDate}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            {toolbox.pdfId && (
+                                                                <button
+                                                                    className="btn btn-primary"
+                                                                    onClick={() => openPDF(toolbox.pdfId)}
+                                                                    style={{ marginLeft: '12px', whiteSpace: 'nowrap' }}
+                                                                >
+                                                                    📄 Open PDF
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    // NIET ALLE AFGEROND - Toon gedetailleerde view
+                                    <>
+                                        <div style={{ display: 'grid', gap: '16px' }}>
+                                            {myCompletions.map(completion => {
+                                                const toolbox = getToolboxInfo(completion.id);
+                                                if (!toolbox) return null;
+
+                                                const allChecked = completion.checkboxes.every(cb => cb.checked);
+                                                const pdfRequired = toolbox.pdfId ? true : false;
+                                                const pdfConfirmed = completion.pdfConfirmed || false;
+                                                const canComplete = allChecked && (!pdfRequired || pdfConfirmed);
+
+                                                const progress = completion.checkboxes.length > 0
+                                                    ? (completion.checkboxes.filter(cb => cb.checked).length / completion.checkboxes.length) * 100
+                                                    : 0;
+
+                                                return (
+                                                    <div key={completion.id} style={{
+                                                        border: '2px solid #e5e7eb',
+                                                        borderRadius: '12px',
+                                                        padding: '20px',
+                                                        background: completion.completed ? '#f0fdf4' : 'white'
+                                                    }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
+                                                            <div>
+                                                                <h3 style={{ fontSize: '20px', marginBottom: '8px' }}>
+                                                                    {completion.completed && '✅ '}
+                                                                    {toolbox.title}
+                                                                </h3>
+                                                                <p style={{ color: '#6b7280', fontSize: '14px' }}>{toolbox.description}</p>
+                                                            </div>
+                                                        </div>
+
+                                                        {toolbox.pdfId && (
+                                                            <div style={{
+                                                                background: '#eff6ff',
+                                                                padding: '16px',
+                                                                borderRadius: '8px',
+                                                                marginBottom: '16px',
+                                                                border: '2px solid #3b82f6'
+                                                            }}>
+                                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                        <span style={{ fontSize: '24px' }}>📄</span>
+                                                                        <div>
+                                                                            <strong style={{ display: 'block' }}>Verplicht Document</strong>
+                                                                            <span style={{ fontSize: '13px', color: '#6b7280' }}>{toolbox.pdfName || 'Document.pdf'}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <button
+                                                                        className="btn btn-primary"
+                                                                        onClick={() => openPDF(toolbox.pdfId)}
+                                                                        style={{ padding: '8px 16px', fontSize: '14px' }}
+                                                                    >
+                                                                        📖 Open PDF
+                                                                    </button>
+                                                                </div>
+                                                                {!completion.completed && (
+                                                                    <label style={{
+                                                                        display: 'flex',
+                                                                        alignItems: 'start',
+                                                                        padding: '12px',
+                                                                        background: 'white',
+                                                                        borderRadius: '6px',
+                                                                        cursor: 'pointer',
+                                                                        border: '2px solid #3b82f6'
+                                                                    }}>
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={completion.pdfConfirmed || false}
+                                                                            onChange={() => togglePDFConfirmation(completion.id)}
+                                                                            style={{ width: '20px', height: '20px', marginRight: '12px', marginTop: '2px', flexShrink: 0 }}
+                                                                        />
+                                                                        <span style={{ fontWeight: 600 }}>
+                                                                            Ik heb de PDF gelezen, begrepen en ga ermee akkoord
+                                                                        </span>
+                                                                    </label>
+                                                                )}
+                                                                {completion.completed && completion.pdfConfirmed && (
+                                                                    <div style={{
+                                                                        padding: '12px',
+                                                                        background: 'white',
+                                                                        borderRadius: '6px',
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        gap: '8px'
+                                                                    }}>
+                                                                        <span>✅</span>
+                                                                        <span style={{ fontWeight: 600, color: '#065f46' }}>
+                                                                            PDF bevestigd
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
+
+                                                        <div style={{ marginBottom: '16px' }}>
+                                                            <strong>Voortgang: {Math.round(progress)}%</strong>
+                                                            <div className="progress-bar">
+                                                                <div className="progress-fill" style={{ width: `${progress}%` }}></div>
+                                                            </div>
+                                                        </div>
+
+                                                        {completion.checkboxes.length > 0 && (
+                                                            <div style={{ marginBottom: '16px' }}>
+                                                                <h4 style={{ marginBottom: '12px' }}>Bevestigingen:</h4>
+                                                                {completion.checkboxes.map(cb => (
+                                                                    <label key={cb.id} style={{
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        padding: '12px',
+                                                                        background: '#f9fafb',
+                                                                        borderRadius: '8px',
+                                                                        marginBottom: '8px',
+                                                                        cursor: 'pointer'
+                                                                    }}>
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={cb.checked}
+                                                                            onChange={() => toggleCheckbox(completion.id, cb.id)}
+                                                                            disabled={completion.completed}
+                                                                            style={{ width: '20px', height: '20px', marginRight: '12px' }}
+                                                                        />
+                                                                        <span style={{ flex: 1 }}>{cb.label}</span>
+                                                                    </label>
+                                                                ))}
+                                                            </div>
+                                                        )}
+
+                                                        {!completion.completed && (
+                                                            <button
+                                                                className="btn btn-success"
+                                                                onClick={() => markAsComplete(completion.id)}
+                                                                disabled={!canComplete}
+                                                            >
+                                                                {canComplete ? '✅ Markeer als Voltooid' :
+                                                                    (!allChecked ? '⏳ Vink alle punten aan' :
+                                                                    (pdfRequired && !pdfConfirmed ? '⏳ Bevestig eerst de PDF' : '⏳ Voltooi alle stappen'))}
+                                                            </button>
+                                                        )}
+
+                                                        {completion.completed && (
+                                                            <div className="alert alert-success">
+                                                                ✅ Voltooid op {formatDate(completion.completedDate)}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* PERSOONLIJKE DOCUMENTEN SECTIE */}
+                                <div style={{ marginTop: '40px' }}>
+                                    <h2 className="section-title">Persoonlijke Documenten</h2>
+                                    <p style={{ marginBottom: '20px', color: '#6b7280', fontSize: '14px' }}>
+                                        Upload hier je identiteitskaart, rijbewijs en andere belangrijke documenten.
+                                    </p>
+
+                                    {/* Upload Knoppen */}
+                                    <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
+                                        <button
+                                            className="btn btn-primary"
+                                            onClick={() => uploadDocument('Identiteitskaart')}
+                                        >
+                                            📇 Upload Identiteitskaart
+                                        </button>
+                                        <button
+                                            className="btn btn-primary"
+                                            onClick={() => uploadDocument('Rijbewijs')}
+                                        >
+                                            🚗 Upload Rijbewijs
+                                        </button>
+                                        <button
+                                            className="btn btn-secondary"
+                                            onClick={() => uploadDocument('Ander Document')}
+                                        >
+                                            📄 Upload Ander Document
+                                        </button>
+                                    </div>
+
+                                    {/* Lijst van Geüploade Documenten */}
+                                    {myDocuments.length === 0 ? (
+                                        <div className="alert alert-info">
+                                            Je hebt nog geen documenten geüpload. Gebruik de knoppen hierboven om je documenten te uploaden.
+                                        </div>
+                                    ) : (
+                                        <div style={{ display: 'grid', gap: '12px' }}>
+                                            {myDocuments.map(doc => {
+                                                const uploadDate = new Date(doc.uploadDate);
+                                                const formattedDate = `${uploadDate.getDate().toString().padStart(2, '0')}/${(uploadDate.getMonth() + 1).toString().padStart(2, '0')}/${uploadDate.getFullYear()} om ${uploadDate.getHours().toString().padStart(2, '0')}:${uploadDate.getMinutes().toString().padStart(2, '0')}`;
+
+                                                return (
+                                                    <div
+                                                        key={doc.id}
+                                                        style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'space-between',
+                                                            padding: '16px',
+                                                            background: 'white',
+                                                            borderRadius: '8px',
+                                                            border: '2px solid #e5e7eb'
+                                                        }}
+                                                    >
+                                                        <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                                                            <span style={{ fontSize: '32px', marginRight: '16px' }}>
+                                                                {doc.type === 'Identiteitskaart' ? '📇' :
+                                                                 doc.type === 'Rijbewijs' ? '🚗' : '📄'}
+                                                            </span>
+                                                            <div>
+                                                                <strong style={{ display: 'block', marginBottom: '4px' }}>
+                                                                    {doc.type}
+                                                                </strong>
+                                                                <span style={{ fontSize: '13px', color: '#6b7280', display: 'block' }}>
+                                                                    {doc.fileName}
+                                                                </span>
+                                                                <span style={{ fontSize: '12px', color: '#9ca3af' }}>
+                                                                    Geüpload op {formattedDate}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                                            <button
+                                                                className="btn btn-secondary"
+                                                                onClick={() => viewDocument(doc.id)}
+                                                            >
+                                                                👁️ Bekijk
+                                                            </button>
+                                                            <button
+                                                                className="btn btn-danger"
+                                                                onClick={() => deleteDocument(doc.id)}
+                                                            >
+                                                                Verwijder
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+
+    <!-- PWA Setup Script -->
+    <script src="pwa-setup-firebase.js"></script>
+
+    <!-- Mobile Styles -->
+    <link rel="stylesheet" href="mobile-styles.css">
+
+    <!-- PWA Install Button -->
+    <button id="pwa-install-btn" style="display: none;">📲 Installeer App</button>
+
+    <!-- Offline Status Banner -->
+    <div id="pwa-status"></div>
+
+</body>
+</html>
